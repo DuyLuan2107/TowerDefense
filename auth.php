@@ -1,9 +1,6 @@
 <?php
-include "includes/header.php";
-include "db/connect.php";
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-};
+session_start();                 // 1. BẮT BUỘC nằm trên cùng, trước mọi HTML
+require "db/connect.php";        // 2. Kết nối DB
 
 $message = "";
 
@@ -32,7 +29,7 @@ if (isset($_POST['login'])) {
         $user = $res->fetch_assoc();
         if (password_verify($password, $user['password'])) {
             $_SESSION['user'] = $user;
-            header("Location: profile.php");
+            header("Location: profile.php");  // redirect sau khi login
             exit;
         } else {
             $message = "<div class='auth-message error'>❌ Sai mật khẩu!</div>";
@@ -41,6 +38,9 @@ if (isset($_POST['login'])) {
         $message = "<div class='auth-message error'>❌ Email không tồn tại!</div>";
     }
 }
+
+// Sau khi xử lý xong mới include header (in HTML)
+include "includes/header.php";
 ?>
 
 <div class="auth-container">
@@ -79,7 +79,6 @@ function showRegister() {
   document.getElementById("login-form").classList.add("hidden");
   document.getElementById("register-form").classList.remove("hidden");
 }
-
 function showLogin() {
   document.getElementById("register-form").classList.add("hidden");
   document.getElementById("login-form").classList.remove("hidden");
