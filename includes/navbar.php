@@ -1,5 +1,7 @@
 <?php
-session_start(); // đảm bảo có session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 ?>
 <nav class="navbar">
     <div class="nav-left">
@@ -7,6 +9,8 @@ session_start(); // đảm bảo có session
         <a href="game.php">Game</a>
         <a href="profile.php">Thông Tin Cá Nhân</a>
         <a href="contact.php">Liên Hệ</a>
+        <a href="leaderboard.php">Bảng Xếp Hạng</a>
+        <a href="forum_list.php">Cộng Đồng Game</a>
     </div>
 
     <div class="nav-right">
