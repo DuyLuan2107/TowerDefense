@@ -27,8 +27,8 @@ if (isset($_POST['register'])) {
     $password = $_POST['password'];
     $confirm = $_POST['confirm_password'];
 
-    if (!preg_match("/^[A-Za-z0-9_]+$/", $name)) {
-        $message = "<div class='auth-message error'>❌ Tên chỉ chứa chữ cái, số và dấu gạch dưới!</div>";
+    if (!preg_match('/^[\p{L}\p{N}_ ]+$/u', $name)) {
+    $message = "<div class='auth-message error'>❌ Tên chỉ được chứa chữ, số, khoảng trắng và dấu gạch dưới!</div>";
     } elseif (strlen($secret) < 4) {
         $message = "<div class='auth-message error'>❌ Mã bí mật phải ≥ 4 ký tự!</div>";
     } elseif ($password !== $confirm) {
@@ -91,7 +91,7 @@ include "includes/header.php"; // navbar
 ?>
 
 <style>
-/* ======= AUTH CONTAINER GIỮ NỀN TRẮNG VÀ CĂN GIỮA ======= */
+/* ====== AUTH CONTAINER GIỮ NỀN TRẮNG VÀ CĂN GIỮA ====== */
 .auth-wrapper {
     min-height: calc(100vh - 120px); /* trừ header + footer nếu khoảng 120px */
     display: flex;
