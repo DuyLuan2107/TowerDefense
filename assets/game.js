@@ -53,6 +53,10 @@ let enemies = [];
 let bullets = [];
 let gold = 100;
 let lives = 20;
+// === Scoring/Runs ===
+let gameStartedAt = null;   // timestamp (ms) khi bắt đầu lượt
+let enemiesKilled = 0;      // số quái diệt được trong lượt
+let runSubmitted = false; // tránh submit nhiều lần
 
 // UI / placement state
 let mouseX = 0;
@@ -77,7 +81,17 @@ let hitEffects = [];
 
 // Vàng rơi bay về UI
 let goldPickups = [];
-
+// Hàm tiện ích
+function getElapsedSeconds() {
+  if (!gameStartedAt) return 0;
+  return Math.floor((performance.now() - gameStartedAt) / 1000);
+}
+function getLiveScore() {
+  const durationSec = getElapsedSeconds();
+  const goldLeft = gold;
+  const score = Math.max(0, Math.round(enemiesKilled * 10 + goldLeft * 1 - durationSec * 0.5));
+  return { score, durationSec };
+}
 // --- Resize + scale ---
 function updateCanvasSize() {
   // Kích thước nền base (đang dùng trong game)
@@ -131,7 +145,11 @@ function updateCanvasSize() {
   _prevScaleX = scaleX;
   _prevScaleY = scaleY;
 }
-
+function startRun() {
+  gameStartedAt = performance.now();
+  enemiesKilled = 0;
+  runSubmitted = false;     // reset cờ
+}
 
 // Wave system (giữ nguyên)
 const waves = [
@@ -461,8 +479,12 @@ function drawUI() {
   ctx.font = '16px Arial';
   const infoOffsetX = -34;
   ctx.fillText(`Wave: ${Math.min(currentWave + 1, waves.length)}/${waves.length}`, infoX + infoOffsetX, infoTop);
-  ctx.fillText(`Gold/kill: 1`, infoX + infoOffsetX, infoTop + lineHeight);
+  //ctx.fillText(`Gold/kill: 1`, infoX + infoOffsetX, infoTop + lineHeight);
   ctx.textBaseline = 'alphabetic';
+  // ... sau phần Wave info
+  const live = getLiveScore();
+  ctx.fillText(`Thời gian: ${live.durationSec}s`, infoX + infoOffsetX, infoTop + lineHeight*1.5);
+  ctx.fillText(`Điểm: ${live.score}`,           infoX + infoOffsetX, infoTop + lineHeight*2.5);
 
   // Panel chọn tháp
   const panelW = SIDEBAR_WIDTH;
@@ -599,12 +621,124 @@ function updateEnemies(deltaTime) {
   enemies = enemies.filter(e => {
     if (e.hp <= 0) {
       if (e.waypointIndex < PATH.length) {
+        enemiesKilled++;
         try { playDeath(); setTimeout(() => playCollect(), 50); } catch (ex) {}
         goldPickups.push({ x: e.x, y: e.y, value: e.goldValue || 1, scale: 1.2, alpha: 0 });
       }
       return false;
     }
     return true;
+  });
+}
+function showWinOverlay(finalScore) {
+  const ov = document.getElementById('winOverlay');
+  const lbTable = document.getElementById('lbTable');
+  const lbBody = lbTable.querySelector('tbody');
+  const lbStatus = document.getElementById('lbStatus');
+  const yourRank = document.getElementById('yourRank');
+  const btnOk = document.getElementById('btnOk');
+  const btnReplay = document.getElementById('btnReplay');
+  const btnShare = document.getElementById('btnShare');
+  const finalScoreText = document.getElementById('finalScoreText');
+
+  finalScoreText.textContent = `Điểm của bạn: ${finalScore}`;
+
+  ov.classList.remove('hidden');
+  lbTable.classList.add('hidden');
+  lbStatus.classList.remove('hidden');
+  lbStatus.textContent = 'Đang tải BXH...';
+  yourRank.classList.add('hidden');
+
+  // Nút OK: về Home (hoặc bạn đổi thành resetGameToMenu() cũng được)
+  btnOk.onclick = () => { window.location.href = 'index.php'; };
+
+  // Nút chơi lại: reload trang
+  btnReplay.onclick = () => { window.location.reload(); };
+
+  // Nút khoe điểm lên forum
+  btnShare.style.display = 'inline-block';
+  btnShare.href = 'forum_create_post.php?score=' + finalScore;
+
+  // Gọi API BXH
+  fetch('api/leaderboard_top.php', { credentials: 'include' })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) {
+        lbStatus.textContent = 'Không tải được BXH.';
+        return;
+      }
+      lbBody.innerHTML = '';
+      data.top.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          `<td>${idx + 1}</td>
+           <td>${row.name}</td>
+           <td style="text-align:right">${row.best_score}</td>`;
+        lbBody.appendChild(tr);
+      });
+      lbStatus.classList.add('hidden');
+      lbTable.classList.remove('hidden');
+
+      if (data.userRank) {
+        yourRank.textContent = `Vị trí của bạn: hạng #${data.userRank} (điểm cao nhất: ${data.userBest})`;
+        yourRank.classList.remove('hidden');
+      } else {
+        yourRank.textContent = 'Hãy đăng nhập và hoàn thành một lượt để có xếp hạng!';
+        yourRank.classList.remove('hidden');
+      }
+    })
+    .catch(() => {
+      lbStatus.textContent = 'Không thể kết nối máy chủ để lấy BXH.';
+    });
+}
+function resetGameToMenu() {
+  // reset state tối thiểu để chơi lại
+  towers = [];
+  enemies = [];
+  bullets = [];
+  gold = 100;
+  lives = 20;
+
+  currentWave = 0;
+  waveSpawnTimer = 0;
+  waveSpawned = 0;
+  waveActive = false;
+
+  gameStartedAt = null;
+  enemiesKilled = 0;
+  runSubmitted = false;
+
+  gameState = 'menu';
+  document.getElementById('winOverlay').classList.add('hidden');
+}
+
+function endRunAndSubmit(isWin) {
+  if (runSubmitted) return;
+  runSubmitted = true;
+
+  const finishedAt = performance.now();
+  const durationSec = Math.round((finishedAt - (gameStartedAt || finishedAt)) / 1000);
+  const goldLeft = gold;
+
+  // điểm = quái diệt × 10 + vàng × 1 – thời gian × 0.5
+  const score = Math.max(0, Math.round(enemiesKilled * 10 + goldLeft - durationSec * 0.5));
+
+  // Hiện overlay (dù thắng hay thua – nếu muốn riêng UI khi thua thì tách thêm)
+  showWinOverlay(score);
+
+  // Gửi điểm lên server (chỉ lưu được nếu đã đăng nhập)
+  fetch('api/save_score.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      score,
+      enemies_killed: enemiesKilled,
+      gold_left: goldLeft,
+      duration_seconds: durationSec
+    })
+  }).catch(() => {
+    // Không cần báo lỗi cho user ở đây, overlay vẫn hiển thị bình thường
   });
 }
 
@@ -625,8 +759,10 @@ function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
 // --- Game Loop ---
 let lastTime = 0;
 function loop(currentTime) {
-  if (lives <= 0) gameState = 'lose';
-
+  if (lives <= 0 && gameState === 'running' && !runSubmitted) {
+  gameState = 'lose';
+  endRunAndSubmit(false);
+ }
   if (gameState !== 'running') {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawMap();
@@ -649,25 +785,37 @@ function loop(currentTime) {
   updateGoldPickups(deltaTime);
 
   // Wave spawn logic (giữ nguyên)
-  if (currentWave < waves.length) {
-    if (!waveActive) { waveActive = true; waveSpawnTimer = 0; waveSpawned = 0; }
-    if (waveActive) {
-      waveSpawnTimer += deltaTime;
-      const cfg = waves[currentWave];
-      if (waveSpawned < cfg.count && waveSpawnTimer >= cfg.spawnInterval) {
-        waveSpawnTimer = 0;
-        const start = { x: PATH[0].x * scaleX, y: PATH[0].y * scaleY };
-        enemies.push({
-          x: start.x, y: start.y, waypointIndex: 1,
-          speed: ENEMY_BASE_SPEED, hp: 100, maxHp: 100, goldValue: 1
-        });
-        waveSpawned++;
-      }
-      if (waveSpawned >= cfg.count && enemies.length === 0) {
-        waveActive = false; currentWave++;
-      }
+  // Wave spawn logic
+if (currentWave < waves.length) {
+  if (!waveActive) { waveActive = true; waveSpawnTimer = 0; waveSpawned = 0; }
+  if (waveActive) {
+    waveSpawnTimer += deltaTime;
+    const cfg = waves[currentWave];
+    if (waveSpawned < cfg.count && waveSpawnTimer >= cfg.spawnInterval) {
+      waveSpawnTimer = 0;
+      const start = { x: PATH[0].x * scaleX, y: PATH[0].y * scaleY };
+      enemies.push({
+        x: start.x, y: start.y, waypointIndex: 1,
+        speed: ENEMY_BASE_SPEED, hp: 100, maxHp: 100, goldValue: 1
+      });
+      waveSpawned++;
+    }
+    if (waveSpawned >= cfg.count && enemies.length === 0) {
+      waveActive = false;
+      currentWave++;
     }
   }
+}
+
+// === WIN check: đã qua hết waves, không còn quái, không còn wave đang spawn ===
+if (gameState === 'running' && !runSubmitted &&
+    currentWave >= waves.length &&
+    enemies.length === 0 &&
+    !waveActive) {
+  gameState = 'win';
+  endRunAndSubmit(true);
+}
+
 
   // Vẽ
   drawMap();
@@ -745,6 +893,7 @@ canvas.addEventListener('click', (e) => {
     if (x >= bx && x <= bx + bw && y >= by && y <= by + bh) {
       try { unlockAudio(); } catch (e) {}
       gameState = 'running';
+      startRun();
     }
     return;
   }
@@ -847,3 +996,4 @@ loadAssets().then(() => {
   } catch (e) {}
   loop(0);
 });
+
