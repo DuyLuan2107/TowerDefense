@@ -1,22 +1,28 @@
 <?php
-// comment_delete.php
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'db/connect.php';
 
-$comment_id = (int)($_GET['id'] ?? 0);
-$post_id    = (int)($_GET['post'] ?? 0);
+$cid = (int)($_GET['id'] ?? 0);
+$post_id = (int)($_GET['post'] ?? 0);
 
-if (!$comment_id || !$post_id || !isset($_SESSION['user'])) {
-    header("Location: forum_view.php?id=" . $post_id);
-    exit;
+if ($cid <= 0 || $post_id <= 0) die("Không hợp lệ.");
+
+// Lấy comment
+$stmt = $conn->prepare("SELECT * FROM comments WHERE id = ?");
+$stmt->bind_param("i", $cid);
+$stmt->execute();
+$c = $stmt->get_result()->fetch_assoc();
+
+if (!$c) die("Không tìm thấy bình luận.");
+
+// Kiểm tra quyền
+if (!isset($_SESSION['user']) || $_SESSION['user']['id'] != $c['user_id']) {
+    die("Bạn không có quyền xoá bình luận này.");
 }
 
-// chỉ cho xoá nếu là chủ comment
-$uid = (int)$_SESSION['user']['id'];
+// Xoá
+$conn->query("DELETE FROM comments WHERE id = $cid");
 
-$stmt = $conn->prepare("DELETE FROM comments WHERE id = ? AND user_id = ?");
-$stmt->bind_param("ii", $comment_id, $uid);
-$stmt->execute();
-
-header("Location: forum_view.php?id=" . $post_id);
+header("Location: forum_view.php?id=".$post_id);
 exit;
+?>
