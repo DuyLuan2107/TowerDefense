@@ -1,14 +1,16 @@
-CREATE DATABASE IF NOT EXISTS tower_defense;
+CREATE DATABASE tower_defense;
 USE tower_defense;
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100),
   email VARCHAR(100) UNIQUE,
-  password VARCHAR(255)
+  password VARCHAR(255),
+  avatar VARCHAR(255) DEFAULT 'uploads/default.png',
+  secret_code VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS scores (
+CREATE TABLE scores (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   score INT NOT NULL,
@@ -38,6 +40,31 @@ CREATE TABLE IF NOT EXISTS comments (
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS comment_images (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  comment_id INT NOT NULL,
+  image_path VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS post_likes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  post_id INT NOT NULL,
+  user_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_like (post_id, user_id),
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS post_files (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  post_id INT NOT NULL,
+  file_path VARCHAR(255),
+  file_type VARCHAR(20),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+
 
 -- USERS (20 người chơi mẫu)
 INSERT INTO users (name, email, password) VALUES
@@ -174,4 +201,3 @@ INSERT INTO comments (post_id, user_id, content) VALUES
 (18,1,'Tháp 3 mạnh thiệt.'),
 (19,3,'Hay quá admin.'),
 (20,2,'Game vui thật.');
-
