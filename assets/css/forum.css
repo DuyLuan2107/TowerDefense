@@ -1,0 +1,222 @@
+
+.forum-container {
+    width: 1200px;           /* Bự và rõ ràng */
+    margin: 40px auto;      /* Căn giữa + cách trên */
+    background: #fff;       
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.15);  /* Giống hình mẫu */
+}
+
+/* Khoảng cách bên trái của nội dung list */
+.forum-list {
+    margin-left: 20px;      /* Không dính sát mép trái */
+}
+
+/* Từng card bài viết */
+.forum-card {
+    display: flex;
+    justify-content: space-between; /* Nội dung bên trái, stats bên phải */
+    align-items: flex-start;
+    gap: 15px;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    background: #fff;
+    margin-bottom: 12px;
+    transition: 0.25s;
+}
+
+
+.forum-icon {
+    font-size: 35px;
+}
+
+.forum-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.forum-title:hover {
+    text-decoration: underline;
+}
+
+.forum-excerpt {
+    color: #333;
+    margin-top: 6px;
+}
+
+.muted {
+    color: #777;
+}
+
+.forum-card:hover {
+    background: #f8f9ff;
+    border-color: #b5c7ff;
+}
+
+.forum-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 8px;
+}
+
+.pagination a {
+    padding: 8px 14px;
+    background: #f1f1f1;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    border: 1px solid #ddd;
+    transition: 0.25s;
+}
+
+.pagination a:hover {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.pagination .active {
+    background: #007bff;
+    color: white;
+    font-weight: 600;
+    border: 1px solid #007bff;
+    cursor: default;
+}
+
+.pagination .disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+
+/* =================================
+   Nút (Button)
+   ================================= */
+.btn-send {
+    /* Màu sắc */
+    background-color: #007bff; /* Màu xanh dương */
+    color: #ffffff;            /* Chữ trắng */
+    
+    /* Hình dáng & Kích thước */
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    
+    /* Chữ */
+    font-weight: bold;
+    font-size: 15px;
+    text-decoration: none;     /* Cho thẻ <a> */
+    
+    /* Tương tác */
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+}
+
+.btn-send:hover {
+    background-color: #0056b3;
+}
+
+.btn-send:active {
+    transform: scale(0.98);
+}
+
+/* =================================
+   Form Tìm Kiếm
+   ================================= */
+
+.forum-container form[method="get"] {
+    position: relative;
+    margin-bottom: 15px;
+    display: flex;
+    gap: 8px;
+}
+
+
+.forum-container form[method="get"] > div:first-child {
+    flex: 1;
+    position: relative;
+}
+
+
+#searchInput {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-sizing: border-box; 
+}
+
+#suggest-box {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    z-index: 100;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+
+
+    box-sizing: border-box;
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+
+.forum-container form[method="get"] + div {
+    margin-bottom: 15px;
+}
+
+
+.suggest-item {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.suggest-item:last-child {
+    border-bottom: none; /* Bỏ viền ở mục cuối */
+}
+
+.suggest-item:hover {
+    background-color: #f4f4f4;
+}
+
+.forum-stats {
+    text-align: right;
+    white-space: nowrap;
+    font-size: 0.9em;
+    color: #555;
+    margin-left: 15px;
+}
+.forum-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.forum-content {
+    flex: 1; /* Chiếm toàn bộ không gian bên trái */
+}
