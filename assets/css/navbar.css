@@ -1,0 +1,30 @@
+.navbar {
+  display: flex;
+  justify-content: space-between; /* chia 2 bên */
+  align-items: center;
+  background: #333;
+  padding: 0 40px; /* cách mép trái & phải */
+  height: 60px;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  margin: 0 30px; /* khoảng cách giữa các link */
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.navbar a:hover {
+  color: #ffd700; /* màu khi hover */
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  padding: 50px;
+}
+
+.nav-right a {
+  font-weight: bold;
+}
