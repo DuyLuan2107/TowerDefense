@@ -32,9 +32,9 @@ if (isset($_POST['register'])) {
     $password = $_POST['password'];
     $confirm = $_POST['confirm_password'];
 
-    if (!preg_match("/^[A-Za-z0-9_]+$/", $name)) {
-        $message = "<div class='auth-message error'>❌ Tên chỉ được chứa chữ cái, số và dấu gạch dưới!</div>";
-    }
+    if (!preg_match('/^[\p{L}\p{N}_ ]+$/u', $name)) {
+    $message = "<div class='auth-message error'>❌ Tên chỉ được chứa chữ, số, khoảng trắng và dấu gạch dưới!</div>";
+}
     elseif ($password !== $confirm) {
         $message = "<div class='auth-message error'>❌ Mật khẩu nhập lại không khớp!</div>";
     }

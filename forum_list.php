@@ -36,13 +36,17 @@ $totalPages = max(1, ceil($total / $perPage));
 
 // ===================== LẤY DANH SÁCH BÀI =====================
 $sql = "
-    SELECT p.*, u.name AS author
+    SELECT p.*, u.name AS author,
+           (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+           (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
     FROM posts p
     JOIN users u ON u.id = p.user_id
     $where
     ORDER BY p.created_at DESC
     LIMIT ? OFFSET ?
 ";
+
+
 
 $stmt = $conn->prepare($sql);
 $types2 = $types . "ii";
@@ -53,9 +57,11 @@ $params2[] = $offset;
 $stmt->bind_param($types2, ...$params2);
 $stmt->execute();
 $result = $stmt->get_result();
+
+
 ?>
 
-<div class="profile-container" style="max-width:900px; text-align:left">
+<div class="forum-container">
   <h2>💬 Cộng Đồng Game</h2>
 
   <!-- Form tìm kiếm + gợi ý -->
@@ -68,23 +74,11 @@ $result = $stmt->get_result();
              style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
 
       <!-- Gợi ý -->
-      <div id="suggest-box"
-           style="
-             position:absolute;
-             background:white;
-             border:1px solid #ccc;
-             width:100%;
-             max-height:200px;
-             overflow-y:auto;
-             display:none;
-             z-index:100;
-             border-radius:8px;
-             box-shadow:0 2px 6px rgba(0,0,0,0.15);
-           ">
+      <div id="suggest-box">
       </div>
     </div>
 
-    <button class="btn-send" style="padding:8px 16px">Tìm</button>
+    <button class="btn-send">Tìm</button>
   </form>
 
   <div style="margin-bottom:15px;">
@@ -98,92 +92,62 @@ $result = $stmt->get_result();
   <?php if ($total == 0): ?>
     <p class="muted">Không có bài phù hợp.</p>
   <?php else: ?>
-    <?php while ($row = $result->fetch_assoc()): ?>
-      <div style="padding:15px;border-bottom:1px solid #eee;">
-        <h3 style="margin:0 0 5px;">
-          <a href="forum_view.php?id=<?= $row['id'] ?>">
-            <?= htmlspecialchars($row['title']) ?>
-          </a>
-        </h3>
-        <div class="muted" style="font-size:0.9em;">
-          By <?= htmlspecialchars($row['author']) ?> • 
-          <?= $row['created_at'] ?>
-        </div>
-        <p style="margin-top:8px;">
-          <?= nl2br(htmlspecialchars(mb_substr($row['content'], 0, 160))) ?>...
-        </p>
+    <div class="forum-list">
+<?php while ($row = $result->fetch_assoc()): ?>
+  <div class="forum-card">
+    <div class="forum-icon">💬</div>
+
+    <div class="forum-content">
+      <a class="forum-title" href="forum_view.php?id=<?= $row['id'] ?>">
+        <?= htmlspecialchars($row['title']) ?>
+      </a>
+
+      <div class="forum-info">
+        <span class="author"><?= htmlspecialchars($row['author']) ?></span> • 
+        <span class="date"><?= $row['created_at'] ?></span>
       </div>
-    <?php endwhile; ?>
+
+      <div class="forum-excerpt">
+        <?= nl2br(htmlspecialchars(mb_substr($row['content'], 0, 160))) ?>...
+      </div>
+    </div>
+
+    <!-- Thêm stats Like || Comment -->
+    <div class="forum-stats">
+        Like: <?= $row['like_count'] ?> || Comment: <?= $row['comment_count'] ?>
+    </div>
+  </div>
+<?php endwhile; ?>
+</div>
+
 
     <!-- PHÂN TRANG -->
     <?php if ($totalPages > 1): ?>
+<div class="pagination">
 
-      <?php
-          $qs = $q !== '' ? '&q='.urlencode($q) : '';
+    <!-- Nút previous -->
+    <a class="<?= $page <= 1 ? 'disabled' : '' ?>"
+       href="<?= $page > 1 ? '?page='.($page-1).($q!==''?'&q='.urlencode($q):'') : '#' ?>">
+       «
+    </a>
 
-          $prev = $page - 1;
-          $next = $page + 1;
+    <!-- Số trang -->
+    <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+        <a class="<?= $p == $page ? 'active' : '' ?>"
+           href="?page=<?= $p . ($q !== '' ? '&q='.urlencode($q) : '') ?>">
+            <?= $p ?>
+        </a>
+    <?php endfor; ?>
 
-          // Số trang hiển thị xung quanh
-          $range = 2;
-          $start = max(1, $page - $range);
-          $end   = min($totalPages, $page + $range);
-      ?>
+    <!-- Nút next -->
+    <a class="<?= $page >= $totalPages ? 'disabled' : '' ?>"
+       href="<?= $page < $totalPages ? '?page='.($page+1).($q!==''?'&q='.urlencode($q):'') : '#' ?>">
+       »
+    </a>
 
-      <div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap;">
+</div>
+<?php endif; ?>
 
-          <!-- Đầu -->
-          <?php if ($page > 1): ?>
-            <a href="?page=1<?= $qs ?>" style="padding:5px 10px;border:1px solid #ccc;border-radius:6px;">
-              <<
-            </a>
-          <?php endif; ?>
-
-          <!-- Trước -->
-          <?php if ($page > 1): ?>
-            <a href="?page=<?= $prev . $qs ?>" style="padding:5px 10px;border:1px solid #ccc;border-radius:6px;">
-              <
-            </a>
-          <?php endif; ?>
-
-          <!-- Dấu ... phía trước nếu start > 1 -->
-          <?php if ($start > 2): ?>
-              <span style="padding:5px 10px;">...</span>
-          <?php endif; ?>
-
-          <!-- Các số trang -->
-          <?php for ($p = $start; $p <= $end; $p++): ?>
-            <?php
-              $active = $p == $page;
-              $style = $active
-                ? "padding:5px 10px; font-weight:bold; background:#ddd; border-radius:6px;"
-                : "padding:5px 10px;border:1px solid #ccc;border-radius:6px;";
-            ?>
-            <a href="?page=<?= $p . $qs ?>" style="<?= $style ?>"><?= $p ?></a>
-          <?php endfor; ?>
-
-          <!-- Dấu ... phía sau nếu end < totalPages -->
-          <?php if ($end < $totalPages - 1): ?>
-              <span style="padding:5px 10px;">...</span>
-          <?php endif; ?>
-
-          <!-- Sau -->
-          <?php if ($page < $totalPages): ?>
-            <a href="?page=<?= $next . $qs ?>" style="padding:5px 10px;border:1px solid #ccc;border-radius:6px;">
-              >
-            </a>
-          <?php endif; ?>
-
-          <!-- Cuối -->
-          <?php if ($page < $totalPages): ?>
-            <a href="?page=<?= $totalPages . $qs ?>" style="padding:5px 10px;border:1px solid #ccc;border-radius:6px;">
-              >>
-            </a>
-          <?php endif; ?>
-
-      </div>
-
-      <?php endif; ?>
 
   <?php endif; ?>
 </div>
