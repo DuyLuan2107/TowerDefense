@@ -4,22 +4,92 @@ require "db/connect.php";        // 2. Kết nối DB
 
 $message = "";
 
-// Xử lý Đăng ký
-if (isset($_POST['register'])) {
-    $name = $conn->real_escape_string($_POST['name']);
-    $email = $conn->real_escape_string($_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+// =================================================
+// 1. TỰ ĐỘNG ĐĂNG NHẬP NẾU CÓ COOKIE REMEMBER TOKEN
+// =================================================
+if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
+    $token = $conn->real_escape_string($_COOKIE['remember_token']);
 
-    $check = $conn->query("SELECT * FROM users WHERE email='$email'");
-    if ($check && $check->num_rows > 0) {
-        $message = "<div class='auth-message error'>Email đã tồn tại!</div>";
-    } else {
-        $conn->query("INSERT INTO users(name, email, password) VALUES('$name', '$email', '$password')");
-        $message = "<div class='auth-message success'>🎉 Đăng ký thành công! Vui lòng đăng nhập.</div>";
+    $res = $conn->query("
+        SELECT users.* FROM login_tokens
+        JOIN users ON users.id = login_tokens.user_id
+        WHERE token='$token' AND expiry > NOW()
+    ");
+
+    if ($res && $res->num_rows > 0) {
+        $_SESSION['user'] = $res->fetch_assoc();
+        header("Location: profile.php");
+        exit;
     }
 }
 
-// Xử lý Đăng nhập
+// ============================
+// 2. XỬ LÝ ĐĂNG KÝ
+// ============================
+if (isset($_POST['register'])) {
+    $name = trim($conn->real_escape_string($_POST['name']));
+    $email = trim($conn->real_escape_string($_POST['email']));
+    $password = $_POST['password'];
+    $confirm = $_POST['confirm_password'];
+
+    if (!preg_match("/^[A-Za-z0-9_]+$/", $name)) {
+        $message = "<div class='auth-message error'>❌ Tên chỉ được chứa chữ cái, số và dấu gạch dưới!</div>";
+    }
+    elseif ($password !== $confirm) {
+        $message = "<div class='auth-message error'>❌ Mật khẩu nhập lại không khớp!</div>";
+    }
+    else {
+        $check = $conn->query("SELECT * FROM users WHERE email='$email'");
+        if ($check && $check->num_rows > 0) {
+            $message = "<div class='auth-message error'>❌ Email đã tồn tại!</div>";
+        } else {
+
+            // Xử lý ảnh
+            $avatarPath = "uploads/default.png";
+
+            if (!empty($_FILES['avatar']['name'])) {
+                $file = $_FILES['avatar'];
+                $nameFile = $file['name'];
+                $tmp = $file['tmp_name'];
+                $size = $file['size'];
+
+                $ext = strtolower(pathinfo($nameFile, PATHINFO_EXTENSION));
+                $allowed = ["jpg","jpeg","png"];
+
+                if (!in_array($ext, $allowed)) {
+                    $message = "<div class='auth-message error'>❌ Chỉ chấp nhận JPG, JPEG, PNG!</div>";
+                }
+                elseif ($size > 2 * 1024 * 1024) {
+                    $message = "<div class='auth-message error'>❌ Ảnh phải nhỏ hơn 2MB!</div>";
+                }
+                else {
+                    $newFile = "avatar_" . time() . rand(1000,9999) . ".$ext";
+                    $upload = "uploads/$newFile";
+                    if (move_uploaded_file($tmp, $upload)) {
+                        $avatarPath = $upload;
+                    }
+                }
+            }
+
+            // Lưu người dùng
+            if ($message == "") {
+                $hashed = password_hash($password, PASSWORD_BCRYPT);
+
+                $conn->query("
+                    INSERT INTO users(name, email, password, avatar)
+                    VALUES('$name', '$email', '$hashed', '$avatarPath')
+                ");
+
+                $message = "<div class='auth-message success'>🎉 Đăng ký thành công! Hãy đăng nhập.</div>";
+            }
+        }
+    }
+}
+
+
+// ============================
+// 3. XỬ LÝ ĐĂNG NHẬP
+// ============================
 if (isset($_POST['login'])) {
     $email = $conn->real_escape_string($_POST['email']);
     $password = $_POST['password'];
@@ -27,14 +97,19 @@ if (isset($_POST['login'])) {
     $res = $conn->query("SELECT * FROM users WHERE email='$email'");
     if ($res && $res->num_rows > 0) {
         $user = $res->fetch_assoc();
+
         if (password_verify($password, $user['password'])) {
+
+            // Gán session login
             $_SESSION['user'] = $user;
             header("Location: profile.php");  // redirect sau khi login
             exit;
-        } else {
+        }
+        else {
             $message = "<div class='auth-message error'>❌ Sai mật khẩu!</div>";
         }
-    } else {
+    }
+    else {
         $message = "<div class='auth-message error'>❌ Email không tồn tại!</div>";
     }
 }
@@ -43,15 +118,22 @@ if (isset($_POST['login'])) {
 include "includes/header.php";
 ?>
 
+<!-- GIAO DIỆN AUTH -->
 <div class="auth-container">
   <?= $message ?>
 
-  <!-- Form Đăng nhập -->
+  <!-- FORM LOGIN -->
   <div class="form-box" id="login-form">
     <h2>🔑 Đăng Nhập</h2>
     <form method="post">
+
       <input type="email" name="email" placeholder="Email" required>
       <input type="password" name="password" placeholder="Mật khẩu" required>
+
+      <label style="margin-top:10px;display:flex;align-items:center;gap:6px;">
+        <input type="checkbox" name="remember"> Ghi nhớ đăng nhập
+      </label>
+
       <button type="submit" name="login">Đăng Nhập</button>
     </form>
     <p>Chưa có tài khoản?
@@ -59,13 +141,20 @@ include "includes/header.php";
     </p>
   </div>
 
-  <!-- Form Đăng ký -->
+  <!-- FORM REGISTER -->
   <div class="form-box hidden" id="register-form">
     <h2>📝 Đăng Ký</h2>
-    <form method="post">
-      <input type="text" name="name" placeholder="Họ và tên" required>
+    <form method="post" enctype="multipart/form-data">
+
+      <input type="text" name="name" placeholder="Tên đăng nhập" required>
       <input type="email" name="email" placeholder="Email" required>
+
+      <label>Ảnh đại diện:</label>
+      <input type="file" name="avatar" accept="image/*">
+
       <input type="password" name="password" placeholder="Mật khẩu" required>
+      <input type="password" name="confirm_password" placeholder="Xác nhận mật khẩu" required>
+
       <button type="submit" name="register">Đăng Ký</button>
     </form>
     <p>Đã có tài khoản?
