@@ -91,7 +91,7 @@ include "includes/header.php"; // navbar
 ?>
 
 <style>
-/* ======= AUTH CONTAINER GIỮ NỀN TRẮNG VÀ CĂN GIỮA ======= */
+/* ====== AUTH CONTAINER GIỮ NỀN TRẮNG VÀ CĂN GIỮA ====== */
 .auth-wrapper {
     min-height: calc(100vh - 120px); /* trừ header + footer nếu khoảng 120px */
     display: flex;
