@@ -1,0 +1,77 @@
+/* Canh giữa canvas, tránh kéo giãn vô ý */
+#gameCanvas {
+  display: block;
+  margin: -20px auto 20px;   /* <- thay vì margin: 0 auto; */
+  max-width: 100%;
+  height: auto;
+}
+
+/* Trang game nên bỏ bớt padding để đỡ mất diện tích */
+.container {
+  padding: 20px;           /* đang có 20px; nếu vẫn chật có thể giảm còn 10px */
+}
+
+/* Nếu vẫn muốn tuyệt đối không scroll dọc ở trang game: */
+/* body.game-page { overflow: hidden; }  (chỉ bật cho route trang game) */
+
+.container {
+  padding: 20px;
+}
+
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.overlay.hidden { display: none; }
+.overlay-inner {
+  background: #fff;
+  width: min(960px, 92vw);
+  max-height: 90vh;
+  overflow: auto;
+  border-radius: 14px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.col h3 { margin: 0 0 10px; }
+.lb-table { width: 100%; border-collapse: collapse; }
+.lb-table th, .lb-table td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+.lb-table th:nth-child(3),
+.lb-table td:nth-child(3) {
+  text-align: right;
+}
+.muted { color: #666; font-size: 0.95em; }
+.your-rank {
+  margin-top: 8px;
+  padding: 8px;
+  background: #f6f9ff;
+  border: 1px solid #dbe7ff;
+  border-radius: 8px;
+}
+.actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #f7f7f7;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn.primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+.btn:hover { filter: brightness(0.98); }
