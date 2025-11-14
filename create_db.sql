@@ -1,8 +1,6 @@
--- Đảm bảo DB
 CREATE DATABASE IF NOT EXISTS tower_defense;
 USE tower_defense;
 
--- Users (như bạn đã có)
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100),
@@ -10,7 +8,6 @@ CREATE TABLE IF NOT EXISTS users (
   password VARCHAR(255)
 );
 
--- Scores: gắn user_id + lưu chi tiết lượt chơi
 CREATE TABLE IF NOT EXISTS scores (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
