@@ -1,5 +1,5 @@
 <?php
-session_start();                 // 1. BẮT BUỘC nằm trên cùng, trước mọi HTML
+session_start();                 // 1. BẮT BUỘC nằm trên cùng
 require "db/connect.php";        // 2. Kết nối DB
 
 $message = "";
@@ -29,11 +29,17 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
 if (isset($_POST['register'])) {
     $name = trim($conn->real_escape_string($_POST['name']));
     $email = trim($conn->real_escape_string($_POST['email']));
+    $ingame = trim($conn->real_escape_string($_POST['ingame_name']));
+    $secret = trim($_POST['secret_code']);
+
     $password = $_POST['password'];
     $confirm = $_POST['confirm_password'];
 
     if (!preg_match("/^[A-Za-z0-9_]+$/", $name)) {
         $message = "<div class='auth-message error'>❌ Tên chỉ được chứa chữ cái, số và dấu gạch dưới!</div>";
+    }
+    elseif (strlen($secret) < 4) {
+        $message = "<div class='auth-message error'>❌ Mã bí mật phải ít nhất 4 ký tự!</div>";
     }
     elseif ($password !== $confirm) {
         $message = "<div class='auth-message error'>❌ Mật khẩu nhập lại không khớp!</div>";
@@ -74,10 +80,11 @@ if (isset($_POST['register'])) {
             // Lưu người dùng
             if ($message == "") {
                 $hashed = password_hash($password, PASSWORD_BCRYPT);
+                $secretHash = password_hash($secret, PASSWORD_BCRYPT);
 
                 $conn->query("
-                    INSERT INTO users(name, email, password, avatar)
-                    VALUES('$name', '$email', '$hashed', '$avatarPath')
+                    INSERT INTO users(name, email, password, avatar, ingame_name, secret_code)
+                    VALUES('$name', '$email', '$hashed', '$avatarPath', '$ingame', '$secretHash')
                 ");
 
                 $message = "<div class='auth-message success'>🎉 Đăng ký thành công! Hãy đăng nhập.</div>";
@@ -99,10 +106,8 @@ if (isset($_POST['login'])) {
         $user = $res->fetch_assoc();
 
         if (password_verify($password, $user['password'])) {
-
-            // Gán session login
             $_SESSION['user'] = $user;
-            header("Location: profile.php");  // redirect sau khi login
+            header("Location: profile.php");
             exit;
         }
         else {
@@ -114,7 +119,6 @@ if (isset($_POST['login'])) {
     }
 }
 
-// Sau khi xử lý xong mới include header (in HTML)
 include "includes/header.php";
 ?>
 
@@ -136,6 +140,11 @@ include "includes/header.php";
 
       <button type="submit" name="login">Đăng Nhập</button>
     </form>
+
+    <p>
+      <a href="forgot_password.php">Quên mật khẩu?</a>
+    </p>
+
     <p>Chưa có tài khoản?
       <a href="#" onclick="showRegister()">Đăng ký ngay</a>
     </p>
@@ -149,6 +158,9 @@ include "includes/header.php";
       <input type="text" name="name" placeholder="Tên đăng nhập" required>
       <input type="email" name="email" placeholder="Email" required>
 
+      <input type="text" name="ingame_name" placeholder="Tên Ingame" required>
+      <input type="text" name="secret_code" placeholder="Mã bí mật (dùng khi quên mật khẩu)" required>
+
       <label>Ảnh đại diện:</label>
       <input type="file" name="avatar" accept="image/*">
 
@@ -157,6 +169,7 @@ include "includes/header.php";
 
       <button type="submit" name="register">Đăng Ký</button>
     </form>
+
     <p>Đã có tài khoản?
       <a href="#" onclick="showLogin()">Đăng nhập ngay</a>
     </p>
