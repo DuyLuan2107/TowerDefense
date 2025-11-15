@@ -7,7 +7,8 @@ CREATE TABLE users (
   email VARCHAR(100) UNIQUE,
   password VARCHAR(255),
   avatar VARCHAR(255) DEFAULT 'uploads/default.png',
-  secret_code VARCHAR(255) NOT NULL
+  secret_code VARCHAR(255) NOT NULL,
+  last_activity DATETIME NULL
 );
 
 CREATE TABLE scores (

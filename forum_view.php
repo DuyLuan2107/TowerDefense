@@ -94,7 +94,12 @@ $comments = $stmtC2->get_result();
   <a href="forum_list.php">&larr; Quay lại</a>
   <h2 style="margin-top:10px; margin-bottom:5px;"><?= htmlspecialchars($post['title']) ?></h2>
   <div class="muted" style="font-size:0.9em;">
-    By <?= htmlspecialchars($post['author']) ?> • <?= $post['created_at'] ?>
+    By <a href="user_profile.php?id=<?= $post['user_id'] ?>" 
+        style="color:#0077cc;text-decoration:none;">
+        <?= htmlspecialchars($post['author']) ?>
+      </a>
+      • <?= $post['created_at'] ?>
+
   </div>
   <p style="margin-top:15px;">
     <?= htmlspecialchars($post['content']) ?>
@@ -165,7 +170,11 @@ $comments = $stmtC2->get_result();
 
   <?php while ($c = $comments->fetch_assoc()): ?>
     <div style="margin-bottom:10px; padding:8px; border-radius:8px; background:#f7f7f7;">
-        <strong><?= htmlspecialchars($c['author']) ?></strong>
+        <a href="user_profile.php?id=<?= $c['user_id'] ?>" 
+   style="text-decoration:none;color:#0077ff;">
+   <?= htmlspecialchars($c['author']) ?>
+</a>
+
         <span class="muted" style="font-size:0.85em;"> • <?= $c['created_at'] ?></span>
 
         <p style="margin:5px 0;">
