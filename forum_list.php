@@ -1,15 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'db/connect.php';
-
-// ========================= ONLINE COUNT =========================
-$sqlOnline = "
-    SELECT COUNT(*) AS total 
-    FROM users 
-    WHERE last_activity >= NOW() - INTERVAL 60 SECOND
-";
-$onlineCount = $conn->query($sqlOnline)->fetch_assoc()['total'] ?? 0;
-
 include 'includes/header.php';
 
 // ===================== TÌM KIẾM =====================
@@ -45,15 +36,17 @@ $totalPages = max(1, ceil($total / $perPage));
 
 // ===================== LẤY DANH SÁCH BÀI =====================
 $sql = "
-    SELECT p.*, u.name AS author,
-           (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-           (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
-    FROM posts p
-    JOIN users u ON u.id = p.user_id
-    $where
-    ORDER BY p.created_at DESC
-    LIMIT ? OFFSET ?
+    SELECT p.*, u.name AS author, u.avatar,
+       (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
+FROM posts p
+JOIN users u ON u.id = p.user_id
+$where
+ORDER BY p.created_at DESC
+LIMIT ? OFFSET ?
+
 ";
+
 
 
 
@@ -71,15 +64,7 @@ $result = $stmt->get_result();
 ?>
 
 <div class="forum-container">
-  <!-- TIÊU ĐỀ + ONLINE -->
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h2>💬 Cộng Đồng Game</h2>
-
-      <div style="font-size:0.9em; color:#555;">
-          <span style="color:limegreen; font-size:14px;">●</span>
-          <?= $onlineCount ?> thành viên đang online
-      </div>
-  </div>
+  <h2>💬 Cộng Đồng Game</h2>
 
   <!-- Form tìm kiếm + gợi ý -->
   <form method="get" style="position:relative; margin-bottom:15px; display:flex; gap:8px;">
@@ -111,29 +96,56 @@ $result = $stmt->get_result();
   <?php else: ?>
     <div class="forum-list">
 <?php while ($row = $result->fetch_assoc()): ?>
-  <div class="forum-card">
-    <div class="forum-icon">💬</div>
+  <div class="forum-card" data-href="forum_view.php?id=<?= $row['id'] ?>" onclick="goToPost(event, this)">
+    <div class="forum-icon">
+    <img src="<?= $row['avatar'] ?: 'uploads/default.png' ?>" 
+     alt="avatar" class="avatar-img">
+
+</div>
+
 
     <div class="forum-content">
-      <a class="forum-title" href="forum_view.php?id=<?= $row['id'] ?>">
+
+    <!-- TÊN USER -->
+    <div class="author" style="font-weight:bold; color:#000;">
+        <?= htmlspecialchars($row['author']) ?>
+    </div>
+
+
+    <!-- NGÀY THÁNG -->
+    <?php
+    $date = new DateTime($row['created_at']);
+    $monthNames = [
+        1 => 'Tháng 1', 2 => 'Tháng 2', 3 => 'Tháng 3', 4 => 'Tháng 4',
+        5 => 'Tháng 5', 6 => 'Tháng 6', 7 => 'Tháng 7', 8 => 'Tháng 8',
+        9 => 'Tháng 9', 10 => 'Tháng 10', 11 => 'Tháng 11', 12 => 'Tháng 12'
+    ];
+    $formattedDate = $date->format('d') . ' ' . $monthNames[(int)$date->format('m')] . ' ' . $date->format('Y');
+    ?>
+    <div class="date" style="font-size:0.9em; color:#777;">
+        <?= $formattedDate ?>
+    </div>
+
+    <!-- TIÊU ĐỀ -->
+    <a class="forum-title"
+       href="forum_view.php?id=<?= $row['id'] ?>"
+       style="display:block; font-size:1.1em; font-weight:bold; margin:6px 0;">
         <?= htmlspecialchars($row['title']) ?>
-      </a>
+    </a>
 
-      <div class="forum-info">
-        <span class="author"><?= htmlspecialchars($row['author']) ?></span> • 
-        <span class="date"><?= $row['created_at'] ?></span>
-      </div>
-
-      <div class="forum-excerpt">
+    <!-- NỘI DUNG -->
+    <div class="forum-excerpt">
         <?= nl2br(htmlspecialchars(mb_substr($row['content'], 0, 160))) ?>...
-      </div>
     </div>
 
-    <!-- Thêm stats Like || Comment -->
+</div>
+
+
     <div class="forum-stats">
-        Like: <?= $row['like_count'] ?> || Comment: <?= $row['comment_count'] ?>
+        ❤️ <?= $row['like_count'] ?>   💬  <?= $row['comment_count'] ?>
     </div>
-  </div>
+</div>
+
 <?php endwhile; ?>
 </div>
 
@@ -218,6 +230,14 @@ document.addEventListener('click', function(e) {
         box.style.display = "none";
     }
 });
+function goToPost(e, card) {
+    // Nếu click vào link/nút bên trong, không chuyển hướng
+    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+
+    // Điều hướng đến bài viết
+    window.location.href = card.dataset.href;
+}
 </script>
+
 
 <?php include 'includes/footer.php'; ?>
