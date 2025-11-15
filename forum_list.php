@@ -3,6 +3,14 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'db/connect.php';
 include 'includes/header.php';
 
+// ========================= ONLINE COUNT =========================
+$sqlOnline = "
+    SELECT COUNT(*) AS total 
+    FROM users 
+    WHERE last_activity >= NOW() - INTERVAL 60 SECOND
+";
+$onlineCount = $conn->query($sqlOnline)->fetch_assoc()['total'] ?? 0;
+
 // ===================== TÌM KIẾM =====================
 $q = trim($_GET['q'] ?? '');
 $perPage = 5;
@@ -64,7 +72,14 @@ $result = $stmt->get_result();
 ?>
 
 <div class="forum-container">
-  <h2>💬 Cộng Đồng Game</h2>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>💬 Cộng Đồng Game</h2>
+
+      <div style="font-size:0.9em; color:#555;">
+          <span style="color:limegreen; font-size:14px;">●</span>
+          <?= $onlineCount ?> thành viên đang online
+      </div>
+  </div>
 
   <!-- Form tìm kiếm + gợi ý -->
   <form method="get" style="position:relative; margin-bottom:15px; display:flex; gap:8px;">
