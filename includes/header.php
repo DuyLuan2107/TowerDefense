@@ -2,6 +2,14 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+require_once "db/connect.php";
+
+/* ===== Cập nhật last_activity cho user đang đăng nhập ===== */
+if (isset($_SESSION['user'])) {
+    $uid = (int)$_SESSION['user']['id'];
+    $conn->query("UPDATE users SET last_activity = NOW() WHERE id = $uid");
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
