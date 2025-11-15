@@ -52,10 +52,16 @@
 }
 
 .fb-post-header .topic-badge,
-.fb-post-header .post-title {
-    margin: 4px 0 0 0; /* Căn trái bằng với tên */
-    padding: 0;
+
+.post-title {
+    font-size: 1.4em;
+    font-weight: 700;
+    margin-top: 8px;
+    margin-bottom: 10px;
+    color: #111;
+    line-height: 1.3;
 }
+
 
 
 /* NỘI DUNG BÀI VIẾT TRONG KHUNG */
