@@ -86,10 +86,12 @@
 /* NÚT LIKE / SHARE / EDIT */
 .fb-post-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     margin-top: 10px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid lightgray;
+    border-bottom: 1px solid lightgray;
     padding-top: 5px;
+    padding-bottom: 5px;
 }
 
 .fb-post-actions button,
