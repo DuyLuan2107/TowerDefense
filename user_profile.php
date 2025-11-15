@@ -23,12 +23,6 @@ if (!$user) {
     include "includes/footer.php"; exit;
 }
 
-/* Kiểm tra trạng thái online */
-$isOnline = false;
-if ($user['last_activity']) {
-    $last = strtotime($user['last_activity']);
-    $isOnline = (time() - $last) <= 60; // 1 phút
-}
 ?>
 
 <div class="profile-container" style="max-width:700px;">
@@ -54,10 +48,17 @@ if ($user['last_activity']) {
 
             <p>Email: <?= htmlspecialchars($user['email']) ?></p>
 
+            <?php
+                $onlineSeconds = "N/A";
+                if (!empty($user['last_activity'])) {
+                    $now = time() + (6 * 3600);
+                    $onlineSeconds = $now - strtotime($user['last_activity']);
+                }
+                ?>
             <p>
                 Trạng thái:
-                <span style="color:<?= $isOnline ? "green" : "gray" ?>;">
-                    ● <?= $isOnline ? "Đang hoạt động" : "Ngoại tuyến" ?>
+                <span style="color:<?= $onlineSeconds < 60 ? "green" : "gray" ?>;">
+                    ● <?= $onlineSeconds < 60 ? "Đang hoạt động" : "Ngoại tuyến" ?>
                 </span>
             </p>
 
