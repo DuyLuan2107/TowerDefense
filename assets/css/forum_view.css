@@ -77,9 +77,10 @@
 /* MEDIA */
 .fb-post-media img,
 .fb-post-media video {
+    display: block;
+    margin: 10px auto;
     max-width: 100%;
-    border-radius: 8px;
-    margin-top: 10px;
+    border-radius: 10px;
 }
 
 /* NÚT LIKE / SHARE / EDIT */
