@@ -95,30 +95,33 @@ $comments = $stmtC2->get_result();
 
         <div class="fb-post-container">
             <div style="margin-bottom:10px;">
-    <a href="javascript:history.back()" 
-       style="display:inline-block; font-size:3em; text-decoration:none; color:#1877f2;">
-       ←
-    </a>
-</div>
-
-
-            <div class="fb-post">
-                <div class="fb-post-header">
-                    <img class="avatar" src="<?= $post['author_avatar'] ?: 'default-avatar.png' ?>" alt="Avatar">
-                    <div class="info">
-                        <div class="author"><?= htmlspecialchars($post['author']) ?></div>
-                        <div class="time"><?= formatDateVN($post['created_at']) ?></div>
-                        <?php if (!empty($post['topic'])): ?>
-                            <div class="topic-badge">Chủ đề: <?= htmlspecialchars($post['topic']) ?></div>
-                        <?php endif; ?>
-                        <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
-                    </div>
-                </div>
-
-        <div class="fb-post-content">
-            <?= nl2br(htmlspecialchars($post['content'])) ?>
+            <a href="javascript:history.back()" 
+              style="display:inline-block; font-size:3em; text-decoration:none; color:#1877f2;">
+              ←
+            </a>
         </div>
 
+        <div class="fb-post-header">
+            <a href="user_profile.php?id=<?= $post['user_id'] ?>">
+                <img class="avatar" src="<?= $post['author_avatar'] ?: 'default-avatar.png' ?>" alt="Avatar">
+            </a>
+
+            <div class="info">
+                <div class="author">
+                    <a href="user_profile.php?id=<?= $post['user_id'] ?>" 
+                    style="color:black; font-weight:bold; text-decoration:none;">
+                    <?= htmlspecialchars($post['author']) ?>
+                    </a>
+                </div>
+
+                <div class="time"><?= formatDateVN($post['created_at']) ?></div>
+                <?php if (!empty($post['topic'])): ?>
+                    <div class="topic-badge">Chủ đề: <?= htmlspecialchars($post['topic']) ?></div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
 
         <div class="fb-post-media">
             <?php
@@ -132,6 +135,12 @@ $comments = $stmtC2->get_result();
                     </video>
             <?php endif; endwhile; ?>
         </div>
+
+        <?php if (trim($post['content']) !== ''): ?>
+            <div class="fb-post-content">
+                <?= nl2br(htmlspecialchars($post['content'])) ?>
+            </div>
+        <?php endif; ?>
 
         <div class="fb-post-actions">
             <button id="likeBtn"><?= $userLiked ? "❤️" : "🤍" ?> <span id="likeCount"><?= $totalLikes ?></span></button>
@@ -150,9 +159,18 @@ $comments = $stmtC2->get_result();
         <div class="fb-comments">
             <?php while ($c = $comments->fetch_assoc()): ?>
                 <div class="fb-comment">
-                    <img class="avatar" src="<?= $c['author_avatar'] ?: 'default-avatar.png' ?>" alt="Avatar">
+                    <a href="user_profile.php?id=<?= $c['user_id'] ?>">
+                        <img class="avatar" src="<?= $c['author_avatar'] ?: 'default-avatar.png' ?>" alt="Avatar">
+                    </a>
+
                     <div class="content">
-                        <strong><?= htmlspecialchars($c['author']) ?></strong>
+                        <strong>
+                            <a href="user_profile.php?id=<?= $c['user_id'] ?>"
+                            style="color:black; text-decoration:none;">
+                            <?= htmlspecialchars($c['author']) ?>
+                            </a>
+                        </strong>
+
                         <span style="font-size:0.8em; color:#65676b;"> • <?= formatDateVN($c['created_at']) ?></span>
                         <p><?= htmlspecialchars($c['content']) ?></p>
                         <?php

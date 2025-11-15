@@ -61,6 +61,23 @@ if (isset($_POST['delete_file'])) {
 // LƯU BÀI VIẾT + FILE MỚI
 // =========================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_file'])) {
+    // XÓA FILE CŨ ĐƯỢC ĐÁNH DẤU
+    if (!empty($_POST['delete_list'])) {
+        $list = json_decode($_POST['delete_list'], true);
+
+        foreach ($list as $fid) {
+            $fid = (int)$fid;
+
+            $q = $conn->query("SELECT file_path FROM post_files WHERE id = $fid AND post_id = $post_id");
+            if ($f = $q->fetch_assoc()) {
+                if (file_exists($f['file_path'])) {
+                    unlink($f['file_path']);
+                }
+            }
+
+            $conn->query("DELETE FROM post_files WHERE id = $fid");
+        }
+    }
 
     $title = trim($_POST['title']);
     $content = trim($_POST['content']);
@@ -118,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_file'])) {
   <?php endif; ?>
 
   <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="delete_list" id="deleteList">
 
     <input style="width:100%;padding:10px;margin-bottom:10px"
            name="title"
@@ -138,9 +156,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_file'])) {
         <?php foreach ($oldFiles as $f): ?>
         <div class="preview-item old-file" data-old-id="<?= $f['id'] ?>"
             style="
-            width:120px;height:120px;position:relative;
-            overflow:hidden;border-radius:12px;background:#f0f0f0;
-            display:flex;justify-content:center;align-items:center;">
+                width:120px;height:120px;position:relative;
+                overflow:hidden;border-radius:12px;background:#f0f0f0;
+                display:flex;justify-content:center;align-items:center;
+                margin:10px 10px 0 0;">
+
             
             <?php if ($f['file_type']==='image'): ?>
             <img src="<?= $f['file_path'] ?>" style="width:100%;height:100%;object-fit:cover;">
@@ -149,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_file'])) {
                 style="width:100%;height:100%;object-fit:cover;"></video>
             <?php endif; ?>
 
-            <button type="submit" name="delete_file" value="<?= $f['id'] ?>"
+            <button type="button" class="btn-delete-old" data-id="<?= $f['id'] ?>"
                 style="
                 position:absolute;top:4px;right:4px;
                 width:22px;height:22px;
@@ -157,6 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_file'])) {
                 border-radius:50%;cursor:pointer;font-size:14px;">
                 ×
             </button>
+
         </div>
         <?php endforeach; ?>
     </div>
@@ -234,6 +255,20 @@ document.querySelector("form").addEventListener("submit", () => {
     filesBuffer.forEach(f => dt.items.add(f));
     fileInput.files = dt.files;
 });
+
+let deleteList = [];
+
+document.querySelectorAll(".btn-delete-old").forEach(btn => {
+    btn.onclick = function () {
+        const id = this.dataset.id;
+
+        deleteList.push(id);
+        document.getElementById("deleteList").value = JSON.stringify(deleteList);
+
+        this.parentElement.remove();
+    };
+});
+
 </script>
 
 <?php include 'includes/footer.php'; ?>

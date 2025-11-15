@@ -52,10 +52,16 @@
 }
 
 .fb-post-header .topic-badge,
-.fb-post-header .post-title {
-    margin: 4px 0 0 0; /* Căn trái bằng với tên */
-    padding: 0;
+
+.post-title {
+    font-size: 1.4em;
+    font-weight: 700;
+    margin-top: 8px;
+    margin-bottom: 10px;
+    color: #111;
+    line-height: 1.3;
 }
+
 
 
 /* NỘI DUNG BÀI VIẾT TRONG KHUNG */
@@ -71,18 +77,21 @@
 /* MEDIA */
 .fb-post-media img,
 .fb-post-media video {
+    display: block;
+    margin: 10px auto;
     max-width: 100%;
-    border-radius: 8px;
-    margin-top: 10px;
+    border-radius: 10px;
 }
 
 /* NÚT LIKE / SHARE / EDIT */
 .fb-post-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     margin-top: 10px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid lightgray;
+    border-bottom: 1px solid lightgray;
     padding-top: 5px;
+    padding-bottom: 5px;
 }
 
 .fb-post-actions button,
