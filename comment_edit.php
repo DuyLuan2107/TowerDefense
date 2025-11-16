@@ -4,8 +4,8 @@ require_once 'db/connect.php';
 include 'includes/header.php';
 
 if (!isset($_SESSION['user'])) {
-    echo '<div class="profile-container"><div class="profile-message">
-          Vui lòng <a class="btn-login" href="auth.php">đăng nhập</a> để sửa bài viết.
+    echo '<div class="cmt-edit-container"><div class="cmt-edit-msg">
+          Vui lòng <a class="cmt-edit-login" href="auth.php">đăng nhập</a> để sửa bình luận.
           </div></div>';
     include 'includes/footer.php';
     exit;
@@ -16,7 +16,6 @@ $post_id = (int)($_GET['post'] ?? 0);
 
 if ($cid <= 0 || $post_id <= 0) die("Dữ liệu không hợp lệ.");
 
-// Lấy comment
 $stmt = $conn->prepare("SELECT * FROM comments WHERE id = ?");
 $stmt->bind_param("i", $cid);
 $stmt->execute();
@@ -24,12 +23,10 @@ $c = $stmt->get_result()->fetch_assoc();
 
 if (!$c) die("Không tìm thấy bình luận.");
 
-// Kiểm tra quyền
-if (!isset($_SESSION['user']) || $_SESSION['user']['id'] != $c['user_id']) {
+if ($_SESSION['user']['id'] != $c['user_id']) {
     die("Bạn không có quyền sửa bình luận này.");
 }
 
-// Submit sửa
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = trim($_POST['content']);
 
@@ -43,20 +40,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<div class="profile-container" style="max-width:700px;">
+<div style="width:700px; margin:15px auto 15px auto;">
+    <a href="javascript:history.back()" 
+       style="display:inline-block; font-size:3em; text-decoration:none; color:#1877f2;">
+       ←
+    </a>
+</div>
 
-    <h2>Sửa bình luận</h2>
+<div class="cmt-edit-container">
 
-    <form method="post">
-        <textarea name="content" rows="4"
-          style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
-<?= htmlspecialchars($c['content']) ?>
-        </textarea>
+    <h2 class="cmt-edit-title">✏️ Sửa bình luận</h2>
 
-        <br><br>
-        <button class="btn-send">Lưu</button>
-        <br><br>
-        <a href="javascript:history.back()">Hủy</a>
+    <form method="post" class="cmt-edit-form">
+
+        <textarea name="content" class="cmt-edit-textarea" rows="4"><?= htmlspecialchars($c['content']) ?></textarea>
+
+        <div class="cmt-edit-actions">
+            <button class="cmt-edit-save">💾 Lưu thay đổi</button>
+            <a href="javascript:history.back()" class="cmt-edit-cancel">Hủy</a>
+        </div>
+
     </form>
 
 </div>
