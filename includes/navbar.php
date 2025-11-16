@@ -188,4 +188,380 @@ footer p {
     font-weight: 500;
 }
 
+/* =====================================================
+    CSS CHUNG CHO BODY (ĐỂ CÓ NỀN TỐI)
+=====================================================
+*/
+body {
+    /* Nền tối chủ đạo của web game */
+    background: #1a1a2e; 
+    margin: 0;
+    padding: 0;
+}
+
+/* =====================================================
+    CSS CHO TRANG LIÊN HỆ (CONTACT.PHP)
+=====================================================
+*/
+
+/* --- Container chính --- */
+.contact-container {
+    width: 100%;
+    max-width: 650px;
+    
+    /* Căn giữa container */
+    margin: 60px auto; 
+
+    /* Nền tối, trong suốt (Glassmorphism) */
+    background: rgba(10, 15, 30, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    padding: 30px 40px;
+    border-radius: 10px;
+    
+    /* Viền Neon Cyan */
+    border: 1px solid #00f7ff;
+    box-shadow: 0 0 25px rgba(0, 247, 255, 0.3);
+    
+    text-align: center;
+    color: #f0f0f0;
+    box-sizing: border-box;
+}
+
+/* --- Tiêu đề và Mô tả --- */
+.contact-container h2 {
+    color: #00f7ff; /* Neon Cyan */
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-shadow: 0 0 8px rgba(0, 247, 255, 0.7);
+}
+
+.contact-container p {
+    color: #ccc;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+/* --- Form --- */
+.contact-form .form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.contact-form label {
+    display: block;
+    margin-bottom: 8px;
+    color: #ccc;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+/* --- Input và Textarea --- */
+.contact-form input[type="text"],
+.contact-form input[type="email"],
+.contact-form textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 5px;
+    border: 1px solid #4a4a5e; /* Border tối */
+    background: #0d1321; /* Nền input tối */
+    color: #f0f0f0; /* Chữ sáng */
+    box-sizing: border-box; 
+    transition: all 0.2s ease-in-out;
+    font-family: 'Montserrat', sans-serif; /* Dùng font mới */
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+    border-color: #00f7ff; /* Viền Neon khi focus */
+    box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
+    outline: none;
+}
+
+.contact-form textarea {
+    min-height: 120px;
+    resize: vertical; /* Cho phép thay đổi chiều cao */
+}
+
+/* --- Nút Gửi (Đồng bộ với nút Đăng nhập) --- */
+.btn-send {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 6px;
+    border: none;
+    
+    /* Gradient Tím/Xanh */
+    background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+    color: #fff !important;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.btn-send:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(37, 117, 252, 0.6);
+}
+
+/* --- Thông báo thành công --- */
+.contact-success {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 5px;
+    font-weight: 600;
+    
+    /* Nền xanh lá neon */
+    background: rgba(20, 255, 120, 0.1);
+    color: #14ff78;
+    border: 1px solid #14ff78;
+}
+/* =====================================================
+    CSS CHO TRANG CHỦ (INDEX.PHP)
+=====================================================
+*/
+
+/* --- 1. Hero Section --- */
+.hero-section {
+    /* LƯU Ý: Thay 'path/to/your/game-bg.jpg' bằng link ảnh nền game của bạn.
+      (Ví dụ: 'assets/images/background.jpg') 
+    */
+    background: linear-gradient(rgba(26, 26, 46, 0.8), rgba(26, 26, 46, 0.8)), 
+                url('assets/images/game-bg.jpg') no-repeat center center/cover;
+    height: 60vh; /* Chiều cao 60% màn hình */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #fff;
+    border-bottom: 2px solid #00f7ff; /* Khớp với viền navbar */
+    padding: 0 20px;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem; /* Cỡ chữ lớn */
+    color: #00f7ff;
+    text-shadow: 0 0 15px rgba(0, 247, 255, 0.8);
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    color: #ccc;
+    max-width: 600px;
+    margin: 0 auto 30px auto;
+    line-height: 1.6;
+}
+
+.btn-play {
+    /* Nút "Bắt đầu chơi" - Giống nút Đăng nhập */
+    background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px rgba(37, 117, 252, 0.5);
+}
+.btn-play:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 0 25px rgba(37, 117, 252, 0.8);
+}
+
+/* --- 2. Features Section --- */
+.features {
+    padding: 60px 20px;
+    background: #1a1a2e; /* Nền tối của body */
+    text-align: center;
+}
+
+.features h2 {
+    font-size: 2.5rem;
+    color: #fff;
+    margin-bottom: 50px;
+    font-weight: 700;
+}
+
+.feature-list {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.feature {
+    /* Thẻ Glassmorphism */
+    background: rgba(10, 15, 30, 0.85);
+    border: 1px solid #00f7ff;
+    box-shadow: 0 0 15px rgba(0, 247, 255, 0.2);
+    padding: 30px;
+    border-radius: 10px;
+    width: 320px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 0 25px rgba(0, 247, 255, 0.5);
+}
+
+.feature h3 {
+    color: #00f7ff;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.feature p {
+    color: #ccc;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* --- 3. How to Play Section --- */
+.how-to-play {
+    padding: 60px 20px;
+    background: #162447; /* Nền xanh đậm hơn */
+    text-align: center;
+}
+
+.how-to-play h2 {
+    font-size: 2.5rem;
+    color: #fff;
+    margin-bottom: 50px;
+    font-weight: 700;
+}
+
+.steps-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.step {
+    width: 300px;
+    text-align: center;
+}
+
+.step-icon {
+    font-size: 3.5rem;
+    color: #00f7ff;
+    margin-bottom: 20px;
+    /* Hiệu ứng thở (pulse) */
+    animation: pulse 2s infinite ease-in-out;
+}
+
+.step h3 {
+    color: #fff;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.step p {
+    color: #ccc;
+    font-size: 1rem;
+}
+
+/* Animation cho icon */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+/* --- 4. CTA Section (Kêu gọi Đăng ký) --- */
+.cta-section {
+    padding: 70px 20px;
+    /* LƯU Ý: Thay 'path/to/your/cta-bg.jpg' bằng link ảnh nền khác 
+    */
+    background: linear-gradient(rgba(106, 17, 203, 0.85), rgba(37, 117, 252, 0.85)), 
+                url('assets/images/cta-bg.jpg') no-repeat center center/cover;
+    text-align: center;
+    color: #fff;
+}
+
+.cta-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.cta-content p {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto 30px auto;
+    color: #eee;
+    line-height: 1.6;
+}
+
+.btn-cta-register {
+    /* Nút "Đăng Ký" - Giống nút Đăng xuất (Đỏ/Cam) */
+    background: linear-gradient(90deg, #F09819 0%, #FF512F 100%);
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px rgba(240, 152, 25, 0.5);
+}
+
+.btn-cta-register:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 0 25px rgba(240, 152, 25, 0.8);
+}
+
+/* --- 5. Community Section --- */
+.community-section {
+    padding: 60px 20px;
+    background: #1a1a2e;
+    text-align: center;
+}
+
+.community-section h2 {
+    font-size: 2.5rem;
+    color: #fff;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.community-section p {
+    font-size: 1.2rem;
+    color: #ccc;
+    margin-bottom: 30px;
+}
+
+.community-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-community {
+    /* Nút viền (Ghost button) */
+    background: transparent;
+    border: 2px solid #00f7ff;
+    color: #00f7ff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.btn-community:hover {
+    background: #00f7ff;
+    color: #1a1a2e; /* Đổi màu chữ thành màu nền */
+    box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
+}
 </style>
