@@ -3,7 +3,7 @@
 require_once __DIR__ . '/db/connect.php'; // dùng __DIR__ để chắc chắn đường dẫn đúng
 
 $name = 'admin';
-$email = 'admin@gamil.com';
+$email = 'admin@gmail.com';
 $password_plain = '123'; // đổi ngay sau khi tạo
 $role = 'admin';
 $secret_code = bin2hex(random_bytes(16)); // secret random
