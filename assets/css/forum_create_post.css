@@ -1,0 +1,126 @@
+/* ================================== */
+/*       CREATE POST – CSS RIÊNG      */
+/* ================================== */
+
+.post-create {
+    width: 700px;
+    margin: 0px auto;
+    background: #fff;
+    padding: 40px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0,0,0,.06);
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    font-size: 15px;
+    margin-bottom: 25px;
+    
+}
+
+.post-create h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+/* TITLE */
+.pc-title {
+    width: 100%;
+    padding: 12px 14px;
+    min-height: 55px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 15px;
+    line-height: 1.4;
+    resize: none;
+    overflow-y: hidden;
+    margin-bottom: 18px;
+}
+
+/* CONTENT */
+.pc-content {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    height: 180px;
+    font-size: 15px;
+    resize: none;
+    margin-bottom: 18px;
+}
+
+.pc-title:focus,
+.pc-content:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(59,130,246,.25);
+}
+
+.pc-label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.pc-file {
+    margin-bottom: 10px;
+}
+
+/* PREVIEW */
+.pc-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.pc-preview-item {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+}
+
+.pc-preview-item img,
+.pc-preview-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pc-preview-item button {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    width: 22px;
+    height: 22px;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    border: none;
+    font-size: 14px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* BUTTONS */
+.pc-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.pc-btn {
+    padding: 10px 24px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    font-size: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.pc-btn:hover {
+    background: #1d4ed8;
+}
+
