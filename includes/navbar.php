@@ -26,9 +26,9 @@ $isGamePage = ($currentPage === 'game.php');
                 <i class="fa-solid fa-circle-user"></i> 
                 Xin chào, <strong><?php echo htmlspecialchars($_SESSION['user']['name']); ?></strong>
             </span>
-            <a href="logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
+            <a href="auth.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         <?php else: ?>
-            <a href="login.php" class="login-btn"><i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập / Đăng Ký</a>
+            <a href="auth.php" class="login-btn"><i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập / Đăng Ký</a>
         <?php endif; ?>
         
         <?php if (!$isGamePage): ?>
@@ -854,5 +854,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
 </script>
 <?php endif; ?>
