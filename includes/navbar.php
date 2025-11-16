@@ -2,6 +2,10 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// [CODE MỚI] Lấy tên trang hiện tại
+$currentPage = basename($_SERVER['PHP_SELF']);
+$isGamePage = ($currentPage === 'game.php');
 ?>
 <nav class="navbar">
     <div class="nav-left">
@@ -24,10 +28,26 @@ if (session_status() === PHP_SESSION_NONE) {
             </span>
             <a href="logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         <?php else: ?>
-            <a href="auth.php" class="login-btn"><i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập / Đăng Ký</a>
+            <a href="login.php" class="login-btn"><i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập / Đăng Ký</a>
+        <?php endif; ?>
+        
+        <?php if (!$isGamePage): ?>
+        <div id="volume-control" class="volume-btn">
+            <i class="fa-solid fa-volume-xmark"></i>
+        </div>
         <?php endif; ?>
     </div>
 </nav>
+
+<?php if (!$isGamePage): ?>
+<audio id="bg-music" loop autoplay muted>
+    <source src="assets/music/game-bgm.mp3" type="audio/mpeg">
+</audio>
+<audio id="hover-sound" muted>
+    <source src="assets/sounds/pop-sound.mp3" type="audio/mpeg">
+</audio>
+<?php endif; ?>
+
 
 <style>
 /* --- Navbar tổng thể --- */
@@ -143,6 +163,23 @@ if (session_status() === PHP_SESSION_NONE) {
     box-shadow: 0 0 10px rgba(37, 117, 252, 0.5);
 }
 
+/* --- [CSS MỚI] Nút Âm Thanh --- */
+.volume-btn {
+    color: #ccc;
+    margin-left: 15px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 8px 12px;
+    border-radius: 6px;
+    user-select: none; 
+}
+.volume-btn:hover {
+    color: #00f7ff;
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}
+
 /* --- Responsive cho điện thoại --- */
 @media (max-width: 992px) { /* Tăng breakpoint lên 992px */
     .navbar {
@@ -159,6 +196,10 @@ if (session_status() === PHP_SESSION_NONE) {
     }
     .navbar a {
         margin: 5px;
+    }
+    /* Sửa CSS cho nút âm lượng trên responsive */
+    .volume-btn {
+        margin-left: 5px; 
     }
 }
 
@@ -574,7 +615,7 @@ body {
     display: flex;
     justify-content: center;
     padding: 60px 20px;
-    background: #1a1a2e; /* Nền tối */ 
+    /* Nền tối đã được body xử lý */
 }
 
 /* --- Container (giống .contact-container) --- */
@@ -758,3 +799,60 @@ body {
     border-color: #4a4a5e;
 }
 </style>
+
+
+<?php if (!$isGamePage): ?>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // Lấy các element âm thanh
+    const bgMusic = document.getElementById('bg-music');
+    const hoverSound = document.getElementById('hover-sound');
+    const volumeControl = document.getElementById('volume-control');
+    // Kiểm tra xem volumeControl có tồn tại không (vì nó bị ẩn ở trang game)
+    if (!volumeControl) return; 
+    
+    const volumeIcon = volumeControl.querySelector('i');
+    let isMuted = true;
+
+    // 1. Logic Nút Mute/Unmute
+    volumeControl.addEventListener('click', () => {
+        isMuted = !isMuted; 
+
+        if (isMuted) {
+            bgMusic.pause(); 
+            bgMusic.muted = true;
+            hoverSound.muted = true;
+            volumeIcon.classList.remove('fa-volume-high');
+            volumeIcon.classList.add('fa-volume-xmark');
+        } else {
+            let playPromise = bgMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.warn("Lỗi Autoplay nhạc nền:", error);
+                });
+            }
+            bgMusic.muted = false;
+            hoverSound.muted = false;
+            volumeIcon.classList.remove('fa-volume-xmark');
+            volumeIcon.classList.add('fa-volume-high');
+        }
+    });
+
+    // 2. Logic Âm thanh "Pop" khi Hover
+    // Lấy TẤT CẢ các nút có thể click trên toàn trang
+    const buttons = document.querySelectorAll(
+        '.navbar a, .btn-play, .btn-cta-register, .btn-community, .btn-send, .form-box button, .pagination a'
+    );
+    
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', () => {
+            if (!isMuted) { 
+                hoverSound.currentTime = 0; 
+                hoverSound.play().catch(e => console.warn("Lỗi âm thanh hover", e));
+            }
+        });
+    });
+});
+</script>
+<?php endif; ?>
