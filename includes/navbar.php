@@ -564,4 +564,197 @@ body {
     color: #1a1a2e; /* Đổi màu chữ thành màu nền */
     box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
 }
+/* =====================================================
+    CSS CHO BẢNG XẾP HẠNG (LEADERBOARD.PHP)
+=====================================================
+*/
+
+/* --- Wrapper (giống .contact-wrapper) --- */
+.leaderboard-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 60px 20px;
+    background: #1a1a2e; /* Nền tối */ 
+}
+
+/* --- Container (giống .contact-container) --- */
+.leaderboard-container {
+    width: 100%;
+    max-width: 700px;
+    background: rgba(10, 15, 30, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 30px 40px;
+    border-radius: 10px;
+    border: 1px solid #00f7ff;
+    box-shadow: 0 0 25px rgba(0, 247, 255, 0.3);
+    color: #f0f0f0;
+    box-sizing: border-box;
+}
+
+.leaderboard-container h2 {
+    color: #00f7ff; /* Neon Cyan */
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 0 0 8px rgba(0, 247, 255, 0.7);
+}
+
+.leaderboard-muted {
+    color: #ccc;
+    font-size: 16px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+/* --- Header của Bảng --- */
+.leaderboard-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 15px 10px 15px;
+    border-bottom: 2px solid #4a4a5e;
+    color: #888;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.header-rank {
+    flex-basis: 80px; /* Độ rộng cột Hạng */
+    text-align: left;
+}
+.header-name {
+    flex-grow: 1; /* Cột Tên tự co dãn */
+    text-align: left;
+}
+.header-score {
+    flex-basis: 100px; /* Độ rộng cột Điểm */
+    text-align: right;
+}
+
+/* --- Danh sách --- */
+.leaderboard-list {
+    margin-top: 15px;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border-radius: 8px;
+    background: #0d1321; /* Nền input */
+    margin-bottom: 10px;
+    border: 1px solid transparent; /* Viền trong suốt */
+    transition: transform 0.3s, background 0.3s;
+}
+
+.leaderboard-item:hover {
+    transform: scale(1.02);
+    background: #162447; /* Nền xanh đậm hơn */
+}
+
+.leaderboard-item-empty {
+    padding: 30px;
+    text-align: center;
+    color: #888;
+    font-style: italic;
+}
+
+/* --- Các cột --- */
+.leaderboard-item .rank {
+    flex-basis: 80px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #00f7ff;
+    text-align: left;
+}
+
+.leaderboard-item .name {
+    flex-grow: 1;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #fff;
+    text-align: left;
+}
+
+.leaderboard-item .score {
+    flex-basis: 100px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #00f7ff;
+    text-align: right;
+}
+
+/* --- HIỆU ỨNG TOP 3 --- */
+
+/* Hạng 1 (Vàng) */
+.leaderboard-item.rank-1 {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(13, 19, 33, 0.85) 60%);
+    border-color: #ffc107;
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
+}
+.rank-1-icon {
+    color: #ffc107;
+    text-shadow: 0 0 8px #ffc107;
+}
+
+/* Hạng 2 (Bạc) */
+.leaderboard-item.rank-2 {
+    background: linear-gradient(90deg, rgba(192, 192, 192, 0.2), rgba(13, 19, 33, 0.85) 60%);
+    border-color: #c0c0c0;
+}
+.rank-2-icon {
+    color: #c0c0c0;
+    text-shadow: 0 0 8px #c0c0c0;
+}
+
+/* Hạng 3 (Đồng) */
+.leaderboard-item.rank-3 {
+    background: linear-gradient(90deg, rgba(205, 127, 50, 0.2), rgba(13, 19, 33, 0.85) 60%);
+    border-color: #cd7f32;
+}
+.rank-3-icon {
+    color: #cd7f32;
+    text-shadow: 0 0 8px #cd7f32;
+}
+
+
+/* --- CSS PHÂN TRANG (Pagination) --- */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    gap: 5px;
+}
+.pagination a {
+    color: #ccc;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 5px;
+    font-weight: 600;
+    background: #0d1321;
+    border: 1px solid #4a4a5e;
+    transition: all 0.2s;
+}
+.pagination a:hover {
+    background: #00f7ff;
+    color: #1a1a2e;
+    border-color: #00f7ff;
+}
+.pagination a.active {
+    background: #00f7ff;
+    color: #1a1a2e;
+    border-color: #00f7ff;
+    cursor: default;
+}
+.pagination a.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.pagination a.disabled:hover {
+    background: #0d1321;
+    color: #ccc;
+    border-color: #4a4a5e;
+}
 </style>
