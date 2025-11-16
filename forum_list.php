@@ -43,16 +43,29 @@ $total = $stmtCount->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages = max(1, ceil($total / $perPage));
 
 // ===================== LẤY DANH SÁCH BÀI =====================
+$sort = $_GET['sort'] ?? 'date';
+$order = ($_GET['order'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
+
+switch ($sort) {
+    case 'likes':
+        $orderBy = "like_count $order";
+        break;
+    case 'comments':
+        $orderBy = "comment_count $order";
+        break;
+    default:
+        $orderBy = "p.created_at $order";
+}
+
 $sql = "
     SELECT p.*, u.name AS author, u.avatar,
        (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
-FROM posts p
-JOIN users u ON u.id = p.user_id
-$where
-ORDER BY p.created_at DESC
-LIMIT ? OFFSET ?
-
+        FROM posts p
+        JOIN users u ON u.id = p.user_id
+        $where
+        ORDER BY $orderBy
+        LIMIT ? OFFSET ?
 ";
 
 
@@ -89,22 +102,48 @@ $result = $stmt->get_result();
              value="<?= htmlspecialchars($q) ?>"
              autocomplete="off"
              style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
+             <button class="btn-send">Tìm</button>
 
       <!-- Gợi ý -->
       <div id="suggest-box">
       </div>
     </div>
-
-    <button class="btn-send">Tìm</button>
+    
   </form>
 
-  <div style="margin-bottom:15px;">
-    <?php if (isset($_SESSION['user'])): ?>
-      <a href="forum_create_post.php" class="btn-send">✍️ Đăng bài mới</a>
-    <?php else: ?>
-      <span class="muted">Bạn cần <a href="auth.php">đăng nhập</a> để đăng bài.</span>
-    <?php endif; ?>
-  </div>
+  <div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+
+    <!-- Nút đăng bài -->
+    <div>
+        <?php if (isset($_SESSION['user'])): ?>
+            <a href="forum_create_post.php" class="btn-send">✍️ Đăng bài mới</a>
+        <?php else: ?>
+            <span class="muted">Bạn cần <a href="auth.php">đăng nhập</a> để đăng bài.</span>
+        <?php endif; ?>
+    </div>
+
+    <!-- Bộ lọc (KHÔNG có nút Lọc) -->
+    <form method="get" style="display:flex; gap:8px;">
+
+        <!-- Giữ lại từ khóa tìm kiếm -->
+        <input type="hidden" name="q" value="<?= htmlspecialchars($q) ?>">
+
+        <select name="sort" onchange="this.form.submit()" 
+        style="padding:7px 10px; border-radius:6px; border:1px solid #ccc;">
+            <option value="date"     <?= ($sort ?? '')=='date' ? 'selected':'' ?>>Ngày đăng</option>
+            <option value="likes"    <?= ($sort ?? '')=='likes' ? 'selected':'' ?>>Số tim</option>
+            <option value="comments" <?= ($sort ?? '')=='comments' ? 'selected':'' ?>>Lượt bình luận</option>
+        </select>
+
+        <select name="order" onchange="this.form.submit()"
+                style="padding:7px 10px; border-radius:6px; border:1px solid #ccc;">
+            <option value="desc" <?= ($order ?? '')=='DESC' ? 'selected':'' ?>>Giảm dần</option>
+            <option value="asc"  <?= ($order ?? '')=='ASC'  ? 'selected':'' ?>>Tăng dần</option>
+        </select>
+
+    </form>
+</div>
+
 
   <?php if ($total == 0): ?>
     <p class="muted">Không có bài phù hợp.</p>
@@ -171,21 +210,25 @@ $result = $stmt->get_result();
 
     <!-- Nút previous -->
     <a class="<?= $page <= 1 ? 'disabled' : '' ?>"
-       href="<?= $page > 1 ? '?page='.($page-1).($q!==''?'&q='.urlencode($q):'') : '#' ?>">
+       href="<?= $page > 1 
+            ? '?page='.($page-1).'&q='.urlencode($q).'&sort='.$sort.'&order='.$order 
+            : '#' ?>">
        «
     </a>
 
     <!-- Số trang -->
     <?php for ($p = 1; $p <= $totalPages; $p++): ?>
         <a class="<?= $p == $page ? 'active' : '' ?>"
-           href="?page=<?= $p . ($q !== '' ? '&q='.urlencode($q) : '') ?>">
+           href="?page=<?= $p ?>&q=<?= urlencode($q) ?>&sort=<?= $sort ?>&order=<?= $order ?>">
             <?= $p ?>
         </a>
     <?php endfor; ?>
 
     <!-- Nút next -->
     <a class="<?= $page >= $totalPages ? 'disabled' : '' ?>"
-       href="<?= $page < $totalPages ? '?page='.($page+1).($q!==''?'&q='.urlencode($q):'') : '#' ?>">
+       href="<?= $page < $totalPages
+            ? '?page='.($page+1).'&q='.urlencode($q).'&sort='.$sort.'&order='.$order
+            : '#' ?>">
        »
     </a>
 
