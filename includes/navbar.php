@@ -11,6 +11,9 @@ if (session_status() === PHP_SESSION_NONE) {
         <a href="contact.php"><i class="fa-solid fa-envelope"></i> Liên Hệ</a>
         <a href="leaderboard.php"><i class="fa-solid fa-ranking-star"></i> Bảng Xếp Hạng</a>
         <a href="forum_list.php"><i class="fa-solid fa-comments"></i> Cộng Đồng Game</a>
+        <?php if (isset($_SESSION['user']) && ($_SESSION['user']['role'] ?? '') === 'admin'): ?>
+        <a href="admin/admin_panel.php"><i class="fa-solid fa-shield-halved"></i> Admin</a>
+    <?php endif; ?>
     </div>
 
     <div class="nav-right">
