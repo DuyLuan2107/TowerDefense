@@ -1,17 +1,21 @@
 CREATE DATABASE tower_defense;
 USE tower_defense;
 
-CREATE TABLE users (
+-- TABLES
+CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100),
   email VARCHAR(100) UNIQUE,
   password VARCHAR(255),
   avatar VARCHAR(255) DEFAULT 'uploads/default.png',
   secret_code VARCHAR(255) NOT NULL,
-  last_activity DATETIME NULL
+  last_activity DATETIME NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'user',
+  last_login DATETIME NULL,
+  is_locked TINYINT(1) NOT NULL DEFAULT 0
 );
 
-CREATE TABLE scores (
+CREATE TABLE IF NOT EXISTS scores (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   score INT NOT NULL,
@@ -22,7 +26,6 @@ CREATE TABLE scores (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- (Tuỳ chọn) Bảng posts cho Forum (nếu bạn chưa có)
 CREATE TABLE IF NOT EXISTS posts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -32,6 +35,7 @@ CREATE TABLE IF NOT EXISTS posts (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
 CREATE TABLE IF NOT EXISTS comments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT NOT NULL,
@@ -41,6 +45,7 @@ CREATE TABLE IF NOT EXISTS comments (
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
 CREATE TABLE IF NOT EXISTS comment_images (
   id INT AUTO_INCREMENT PRIMARY KEY,
   comment_id INT NOT NULL,
@@ -48,6 +53,7 @@ CREATE TABLE IF NOT EXISTS comment_images (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
 );
+
 CREATE TABLE IF NOT EXISTS post_likes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT NOT NULL,
@@ -57,6 +63,7 @@ CREATE TABLE IF NOT EXISTS post_likes (
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
 CREATE TABLE IF NOT EXISTS post_files (
   id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT NOT NULL,
@@ -66,31 +73,41 @@ CREATE TABLE IF NOT EXISTS post_files (
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS admin_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  admin_id INT NULL,
+  action VARCHAR(100) NOT NULL,
+  target_table VARCHAR(50) NULL,
+  target_id INT NULL,
+  ip VARCHAR(45) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
+);
 
--- USERS (20 người chơi mẫu)
-INSERT INTO users (name, email, password) VALUES
-('Duy Luân', 'luan@example.com', '$2y$10$abcdefghijk1234567890luan'),
-('Trọng Hoài', 'hoai@example.com', '$2y$10$abcdefghijk1234567890hoai'),
-('Minh Trí', 'tri@example.com', '$2y$10$abcdefghijk1234567890tri'),
-('Anh Khoa', 'khoa@example.com', '$2y$10$abcdefghijk1234567890khoa'),
-('Vĩnh Thuận', 'thuan@example.com', '$2y$10$abcdefghijk1234567890thuan'),
-('Hải Đăng', 'dang@example.com', '$2y$10$abcdefghijk1234567890dang'),
-('Bảo Nam', 'nam@example.com', '$2y$10$abcdefghijk1234567890nam'),
-('Hữu Lộc', 'loc@example.com', '$2y$10$abcdefghijk1234567890loc'),
-('Thanh Phong', 'phong@example.com', '$2y$10$abcdefghijk1234567890phong'),
-('Hồng Nhung', 'nhung@example.com', '$2y$10$abcdefghijk1234567890nhung'),
-('Quang Minh', 'minh@example.com', '$2y$10$abcdefghijk1234567890minh'),
-('Ngọc Diệp', 'diep@example.com', '$2y$10$abcdefghijk1234567890diep'),
-('Phương Thảo', 'thao@example.com', '$2y$10$abcdefghijk1234567890thao'),
-('Đức Tài', 'tai@example.com', '$2y$10$abcdefghijk1234567890tai'),
-('Tấn Dũng', 'dung@example.com', '$2y$10$abcdefghijk1234567890dung'),
-('Bảo Vy', 'vy@example.com', '$2y$10$abcdefghijk1234567890vy'),
-('Quốc Huy', 'huy@example.com', '$2y$10$abcdefghijk1234567890huy'),
-('Thảo Linh', 'linh@example.com', '$2y$10$abcdefghijk1234567890linh'),
-('Đăng Khoa', 'dkhoa@example.com', '$2y$10$abcdefghijk1234567890dkhoa'),
-('Tuấn Kiệt', 'kiet@example.com', '$2y$10$abcdefghijk1234567890kiet');
+-- SAMPLE USERS (20)
+INSERT INTO users (name, email, password, secret_code, avatar, role) VALUES
+('Duy Luân', 'luan@gmail.com.com', '$2y$10$abcdefghijk1234567890luan', 'sc_1a2b3c4d5e', NULL, 'admin'),
+('Trọng Hoài', 'hoai@gmail.com.com', '$2y$10$abcdefghijk1234567890hoai', 'sc_2b3c4d5e6f', NULL, 'user'),
+('Minh Trí', 'tri@gmail.com.com', '$2y$10$abcdefghijk1234567890tri', 'sc_3c4d5e6f7g', NULL, 'user'),
+('Anh Khoa', 'khoa@gmail.com.com', '$2y$10$abcdefghijk1234567890khoa', 'sc_4d5e6f7g8h', NULL, 'user'),
+('Vĩnh Thuận', 'thuan@gmail.com.com', '$2y$10$abcdefghijk1234567890thuan', 'sc_5e6f7g8h9i', NULL, 'user'),
+('Hải Đăng', 'dang@gmail.com.com', '$2y$10$abcdefghijk1234567890dang', 'sc_6f7g8h9i0j', NULL, 'user'),
+('Bảo Nam', 'nam@gmail.com.com', '$2y$10$abcdefghijk1234567890nam', 'sc_7g8h9i0j1k', NULL, 'user'),
+('Hữu Lộc', 'loc@gmail.com.com', '$2y$10$abcdefghijk1234567890loc', 'sc_8h9i0j1k2l', NULL, 'user'),
+('Thanh Phong', 'phong@gmail.com.com', '$2y$10$abcdefghijk1234567890phong', 'sc_9i0j1k2l3m', NULL, 'user'),
+('Hồng Nhung', 'nhung@gmail.com.com', '$2y$10$abcdefghijk1234567890nhung', 'sc_0j1k2l3m4n', NULL, 'user'),
+('Quang Minh', 'minh@gmail.com.com', '$2y$10$abcdefghijk1234567890minh', 'sc_a1b2c3d4e5', NULL, 'user'),
+('Ngọc Diệp', 'diep@gmail.com.com', '$2y$10$abcdefghijk1234567890diep', 'sc_b2c3d4e5f6', NULL, 'user'),
+('Phương Thảo', 'thao@gmail.com.com', '$2y$10$abcdefghijk1234567890thao', 'sc_c3d4e5f6g7', NULL, 'user'),
+('Đức Tài', 'tai@gmail.com.com', '$2y$10$abcdefghijk1234567890tai', 'sc_d4e5f6g7h8', NULL, 'user'),
+('Tấn Dũng', 'dung@gmail.com.com', '$2y$10$abcdefghijk1234567890dung', 'sc_e5f6g7h8i9', NULL, 'user'),
+('Bảo Vy', 'vy@gmail.com.com', '$2y$10$abcdefghijk1234567890vy', 'sc_f6g7h8i9j0', NULL, 'user'),
+('Quốc Huy', 'huy@gmail.com.com', '$2y$10$abcdefghijk1234567890huy', 'sc_g7h8i9j0k1', NULL, 'user'),
+('Thảo Linh', 'linh@gmail.com.com', '$2y$10$abcdefghijk1234567890linh', 'sc_h8i9j0k1l2', NULL, 'user'),
+('Đăng Khoa', 'dkhoa@gmail.com.com', '$2y$10$abcdefghijk1234567890dkhoa', 'sc_i9j0k1l2m3', NULL, 'user'),
+('Tuấn Kiệt', 'kiet@gmail.com.com', '$2y$10$abcdefghijk1234567890kiet', 'sc_j0k1l2m3n4', NULL, 'user');
 
--- SCORES (mỗi người vài lượt chơi)
+-- SCORES (samples)
 INSERT INTO scores (user_id, score, enemies_killed, gold_left, duration_seconds) VALUES
 (1, 950, 88, 150, 80),
 (1, 820, 75, 120, 90),

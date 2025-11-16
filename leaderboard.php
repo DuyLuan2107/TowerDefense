@@ -2,18 +2,20 @@
 require_once 'db/connect.php';
 include 'includes/header.php';
 
-/**
- * BXH theo điểm cao nhất của MỖI NGƯỜI.
- * Lấy MAX(score) per user, join ra tên.
- * Có phân trang đơn giản (?page=1,2,...)
- */
+/* ============================
+   LẤY TỔNG SỐ USER CÓ ĐIỂM
+   ============================ */
 $perPage = 10;
 $page = max(1, intval($_GET['page'] ?? 1));
 $offset = ($page - 1) * $perPage;
 
 $sqlCount = "SELECT COUNT(*) AS total_users FROM (SELECT user_id FROM scores GROUP BY user_id) t";
 $totalUsers = $conn->query($sqlCount)->fetch_assoc()['total_users'] ?? 0;
+$totalPages = max(1, ceil($totalUsers / $perPage));
 
+/* ============================
+   LẤY BXH
+   ============================ */
 $sql = "
   SELECT u.name, MAX(s.score) AS best_score
   FROM scores s
@@ -26,35 +28,64 @@ $stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $perPage, $offset);
 $stmt->execute();
 $result = $stmt->get_result();
+?>
 
-echo '<div class="profile-container" style="max-width:700px">';
-echo '<h2>🏆 Bảng Xếp Hạng (điểm cao nhất)</h2>';
-echo '<p class="muted">Bạn không cần đăng nhập để xem BXH, nhưng phải đăng nhập mới lưu điểm và có tên trong bảng.</p>';
+<div class="profile-container" style="max-width:700px;">
 
-echo '<table style="width:100%; border-collapse:collapse">';
-echo '<tr style="background:#f1f1f1"><th style="text-align:left;padding:8px">#</th><th style="text-align:left;padding:8px">Người chơi</th><th style="text-align:right;padding:8px">Điểm cao nhất</th></tr>';
+    <h2>🏆 Bảng Xếp Hạng (điểm cao nhất)</h2>
+    <p class="muted">
+        Bạn không cần đăng nhập để xem BXH, nhưng phải đăng nhập mới lưu điểm và có tên trong bảng.
+    </p>
 
-$rankStart = $offset + 1;
-while ($row = $result->fetch_assoc()) {
-  echo '<tr>';
-  echo '<td style="padding:8px">' . ($rankStart++) . '</td>';
-  echo '<td style="padding:8px">' . htmlspecialchars($row['name']) . '</td>';
-  echo '<td style="padding:8px; text-align:right">' . (int)$row['best_score'] . '</td>';
-  echo '</tr>';
-}
-echo '</table>';
+    <table style="width:100%; border-collapse:collapse">
+        <tr style="background:#f1f1f1">
+            <th style="text-align:left;padding:8px">#</th>
+            <th style="text-align:left;padding:8px">Người chơi</th>
+            <th style="text-align:right;padding:8px">Điểm cao nhất</th>
+        </tr>
 
-// Phân trang
-$totalPages = max(1, ceil($totalUsers / $perPage));
-if ($totalPages > 1) {
-  echo '<div style="margin-top:12px">';
-  for ($p = 1; $p <= $totalPages; $p++) {
-    $cur = ($p == $page) ? 'font-weight:bold' : '';
-    echo '<a style="margin-right:8px; '.$cur.'" href="?page='.$p.'">'.$p.'</a>';
-  }
-  echo '</div>';
-}
+        <?php
+        $rank = $offset + 1;
+        while ($row = $result->fetch_assoc()):
+        ?>
+        <tr>
+            <td style="padding:8px"><?= $rank++ ?></td>
+            <td style="padding:8px"><?= htmlspecialchars($row['name']) ?></td>
+            <td style="padding:8px; text-align:right"><?= (int)$row['best_score'] ?></td>
+        </tr>
+        <?php endwhile; ?>
+    </table>
 
-echo '</div>';
 
-include 'includes/footer.php';
+    <!-- ============================
+         PHÂN TRANG – giống forum
+         ============================ -->
+    <?php if ($totalPages > 1): ?>
+    <div class="pagination">
+
+        <!-- prev -->
+        <a class="<?= $page <= 1 ? 'disabled' : '' ?>"
+           href="<?= $page > 1 ? '?page='.($page-1) : '#' ?>">
+           «
+        </a>
+
+        <!-- page numbers -->
+        <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+            <a class="<?= $p == $page ? 'active' : '' ?>"
+               href="?page=<?= $p ?>">
+                <?= $p ?>
+            </a>
+        <?php endfor; ?>
+
+        <!-- next -->
+        <a class="<?= $page >= $totalPages ? 'disabled' : '' ?>"
+           href="<?= $page < $totalPages ? '?page='.($page+1) : '#' ?>">
+           »
+        </a>
+
+    </div>
+    <?php endif; ?>
+
+</div>
+
+<?php include 'includes/footer.php'; ?>

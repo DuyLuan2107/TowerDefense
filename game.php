@@ -1,5 +1,5 @@
 <?php include "includes/header.php"; ?>
-
+<div class="container"></div>
 <!-- Vùng chơi game -->
 <canvas id="gameCanvas" width="800" height="500"></canvas>
 

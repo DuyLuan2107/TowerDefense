@@ -57,10 +57,12 @@ if (isset($_POST['register'])) {
             if ($message == "") {
                 $hashed = password_hash($password, PASSWORD_BCRYPT);
                 $secretHash = password_hash($secret, PASSWORD_BCRYPT);
+
                 $conn->query("
-                    INSERT INTO users(name,email,password,avatar,secret_code)
-                    VALUES('$name','$email','$hashed','$avatarPath','$secretHash')
+                    INSERT INTO users(name,email,password,avatar,secret_code,role)
+                    VALUES('$name','$email','$hashed','$avatarPath','$secretHash','user')
                 ");
+
                 $message = "<div class='auth-message success'>🎉 Đăng ký thành công! Hãy đăng nhập.</div>";
             }
         }
@@ -72,11 +74,17 @@ if (isset($_POST['login'])) {
     $email = $conn->real_escape_string($_POST['email']);
     $password = $_POST['password'];
 
-    $res = $conn->query("SELECT * FROM users WHERE email='$email'");
+    $res = $conn->query("SELECT id, name, email, role, password FROM users WHERE email='$email'");
     if ($res && $res->num_rows > 0) {
         $user = $res->fetch_assoc();
         if (password_verify($password, $user['password'])) {
-            $_SESSION['user'] = $user;
+            // Lưu vào session chỉ những trường cần thiết
+            $_SESSION['user'] = [
+                'id' => $user['id'],
+                'name' => $user['name'],
+                'email' => $user['email'],
+                'role' => $user['role']    // <--- cực quan trọng cho admin
+            ];
             header("Location: profile.php");
             exit;
         } else {
@@ -86,6 +94,7 @@ if (isset($_POST['login'])) {
         $message = "<div class='auth-message error'>❌ Email không tồn tại!</div>";
     }
 }
+
 
 include "includes/header.php"; // navbar
 ?>
