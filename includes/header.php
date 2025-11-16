@@ -16,28 +16,16 @@ if (isset($_SESSION['user'])) {
 <head>
     <meta charset="UTF-8">
     <title>Game Thủ Thành PHP</title>
+    
     <link rel="stylesheet" href="assets/style.css">
-    <style>
-        /* Header user info */
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .avatar-img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #fff;
-        }
-        .username {
-            font-weight: bold;
-            color: #fff;
-        }
-    </style>
-</head>
-<body>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    </head>
+<body style="font-family: 'Montserrat', sans-serif;">
 
-<!-- Navbar -->
 <?php include "includes/navbar.php"; ?>
