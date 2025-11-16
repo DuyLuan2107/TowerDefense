@@ -38,9 +38,8 @@ if (!$user) {
         border-radius:12px;
         box-shadow:0 2px 6px rgba(0,0,0,0.1);
     ">
-        <img src="<?= htmlspecialchars($user['avatar']) ?>"
+        <img class="avatar" src="<?= htmlspecialchars($user['avatar'] ?? 'uploads/default.png') ?>" alt="Avatar"
              style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #ddd;">
-
         <div>
             <h3 style="margin:0;">
                 <?= htmlspecialchars($user['name']) ?>
