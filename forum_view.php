@@ -100,7 +100,7 @@ $comments = $stmtC2->get_result();
               ←
             </a>
         </div>
-
+    <div class="fb-post">
         <div class="fb-post-header">
             <a href="user_profile.php?id=<?= $post['user_id'] ?>">
                 <img class="avatar" src="<?= $post['author_avatar'] ?: 'default-avatar.png' ?>" alt="Avatar">
@@ -205,6 +205,7 @@ $comments = $stmtC2->get_result();
 <?php endif; ?>
 
         </div>
+    </div>
     </div>
 </div>
 
