@@ -86,7 +86,7 @@
 /* NÚT LIKE / SHARE / EDIT */
 .fb-post-actions {
     display: flex;
-    justify-content: space-evenly;
+    justify-content: space-between;
     margin-top: 10px;
     border-top: 1px solid lightgray;
     border-bottom: 1px solid lightgray;

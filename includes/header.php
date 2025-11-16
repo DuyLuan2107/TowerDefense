@@ -41,4 +41,3 @@ if (isset($_SESSION['user'])) {
 
 <!-- Navbar -->
 <?php include "includes/navbar.php"; ?>
-<div class="container"></div>

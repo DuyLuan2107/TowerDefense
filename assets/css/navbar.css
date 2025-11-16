@@ -22,7 +22,7 @@
 .nav-left {
   display: flex;
   align-items: center;
-  padding: 50px;
+  padding: 0;
 }
 
 .nav-right a {
