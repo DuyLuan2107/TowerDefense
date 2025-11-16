@@ -855,5 +855,137 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+/* =====================================================
+    CSS CHO ADMIN CONTACTS (admin_contacts.php)
+=====================================================
+*/
+
+/* --- Wrapper chung --- */
+.admin-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 60px 20px;
+    background: #1a1a2e; /* Nền tối */
+}
+
+/* --- Container (giống leaderboard) --- */
+.admin-container {
+    width: 100%;
+    max-width: 900px;
+    background: rgba(10, 15, 30, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 30px 40px;
+    border-radius: 10px;
+    border: 1px solid #00f7ff;
+    box-shadow: 0 0 25px rgba(0, 247, 255, 0.3);
+    color: #f0f0f0;
+    box-sizing: border-box;
+}
+
+.admin-container h2 {
+    color: #00f7ff;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-align: left;
+    text-shadow: 0 0 8px rgba(0, 247, 255, 0.7);
+}
+.admin-container p {
+    color: #ccc;
+    font-size: 1rem;
+    margin-top: 0;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+/* --- Danh sách tin nhắn --- */
+.contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.contact-card {
+    background: #0d1321;
+    border: 1px solid #4a4a5e;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+/* Tin nhắn chưa đọc (UNREAD) */
+.contact-card.unread {
+    border-left: 4px solid #00f7ff; /* Viền neon bên trái */
+    background: #162447; /* Nền sáng hơn */
+}
+
+.contact-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #2a2a3e;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.contact-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+}
+.contact-email {
+    font-size: 0.9rem;
+    color: #00f7ff;
+    font-style: italic;
+}
+.contact-date {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.contact-card-body {
+    padding: 20px;
+    color: #ccc;
+    line-height: 1.6;
+    white-space: pre-wrap; /* Giữ lại các dấu xuống dòng */
+}
+
+.contact-card-actions {
+    display: flex;
+    gap: 10px;
+    padding: 0 20px 15px 20px;
+    justify-content: flex-end;
+}
+.btn-action {
+    background: #4a4a5e;
+    color: #ccc;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.btn-action i {
+    margin-right: 5px;
+}
+.btn-action.mark-read:hover {
+    background: #2575fc;
+    color: #fff;
+}
+.btn-action.delete:hover {
+    background: #e63946;
+    color: #fff;
+}
+.contact-card-empty {
+    text-align: center;
+    color: #888;
+    padding: 30px;
+}
 </script>
 <?php endif; ?>

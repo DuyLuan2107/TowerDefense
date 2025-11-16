@@ -1,4 +1,5 @@
 <?php
+// (Code PHP của bạn ở trên...)
 require_once __DIR__ . '/../includes/admin_auth.php'; 
 require_admin();
 require_once __DIR__ . '/../includes/csrf.php';
@@ -26,7 +27,7 @@ $posts_today = (int) $posts_today;
 <style>
 :root{
   --bg:#0f1724; --card:#0b1220; --muted:#94a3b8; --accent:#06b6d4; --accent-2:#7c3aed;
-  --text:#e6eef6; --danger:#ef4444;
+  --text:#e6eef6; --danger:#ef4444; --warning: #f59e0b; /* Thêm màu Vàng/Cảnh báo */
   --gap:18px;
 }
 *{box-sizing:border-box}
@@ -100,10 +101,37 @@ body{
 .table td{ padding:10px; border-top:1px solid rgba(255,255,255,0.03); vertical-align:middle; }
 .actions button{ margin-right:8px; padding:6px 10px; border-radius:8px; border:0; cursor:pointer; font-weight:600;}
 .btn-danger{ background:linear-gradient(180deg,#ef4444,#dc2626); color:white;}
+.btn-warning{ background:linear-gradient(180deg,#f59e0b,#d98308); color:white;} /* Thêm style nút Vàng */
 .btn-neutral{ background:rgba(255,255,255,0.03); color:var(--text); border:1px solid rgba(255,255,255,0.02);}
 
 /* Footer small */
 .footer{ margin-top:18px; color:var(--muted); font-size:13px; }
+
+/* Thêm CSS cho Pagination */
+.pagination {
+    text-align: center;
+    margin-top: 20px;
+}
+.pagination a, .pagination span {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 4px;
+    background: rgba(255,255,255,0.03);
+    color: var(--muted);
+    border-radius: 6px;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.02);
+}
+.pagination span.current { /* Đổi tên class 'active' thành 'current' */
+    background: var(--accent);
+    color: var(--text);
+    font-weight: 700;
+}
+/* CSS cho hàng "chưa đọc" */
+.table tr.unread td {
+    background: rgba(124, 58, 237, 0.2); /* Nền tím (accent-2) */
+    font-weight: 600;
+}
 
 /* Responsive */
 @media (max-width:900px){
@@ -118,7 +146,7 @@ body{
   <!-- SIDEBAR -->
   <aside class="sidebar" role="navigation">
     <div class="brand">
-      <img src="assets/logo.png" alt="logo" style="width:44px;height:44px;border-radius:8px;object-fit:cover">
+      <img src="../assets/logo.png" alt="logo" style="width:44px;height:44px;border-radius:8px;object-fit:cover"> <!-- Sửa đường dẫn logo -->
       <div>
         <h2>TowerDefense Admin</h2>
         <div style="color:var(--muted);font-size:13px">Xin chào, <?=htmlspecialchars($_SESSION['user']['name'] ?? 'Admin')?></div>
@@ -131,6 +159,10 @@ body{
       <a href="admin_posts.php">Bài viết</a>
       <a href="admin_comments.php">Bình luận</a>
       <a href="admin_scores.php">Scores</a>
+      
+      <!-- === THÊM LINK MỚI VÀO ĐÂY === -->
+      <a href="admin_contacts.php">Hòm thư</a>
+      
       <a href="admin_stats.php">Thống kê</a>
       <a href="../index.php" style="margin-top:12px;color:var(--muted)">Quay về trang chính</a>
     </nav>
@@ -189,7 +221,7 @@ body{
             (SELECT id, 'score' AS type, CONCAT('Score: ', score) AS detail, created_at FROM scores ORDER BY created_at DESC LIMIT 5)
             ORDER BY created_at DESC LIMIT 10
           ");
-          if ($logQ) {
+          if ($logQ && $logQ->num_rows > 0) {
             while ($row = $logQ->fetch_assoc()):
           ?>
           <tr>
@@ -211,10 +243,5 @@ body{
     <p style="margin-top:18px"><a class="btn-neutral" href="admin_users.php">Mở trang quản lý users</a></p>
   </main>
 </div>
-
-<!-- Optional tiny JS -->
-<script>
-  // placeholder: could add interactivity (search, charts)
-</script>
 </body>
 </html>
