@@ -4,7 +4,9 @@ require_once 'db/connect.php';
 include 'includes/header.php';
 
 if (!isset($_SESSION['user'])) {
-    echo "Vui lòng đăng nhập.";
+    echo '<div class="cmt-edit-container"><div class="cmt-edit-msg">
+          Vui lòng <a class="cmt-edit-login" href="auth.php">đăng nhập</a> để sửa bình luận.
+          </div></div>';
     include 'includes/footer.php';
     exit;
 }
@@ -14,21 +16,17 @@ $post_id = (int)($_GET['post'] ?? 0);
 
 if ($cid <= 0 || $post_id <= 0) die("Dữ liệu không hợp lệ.");
 
-$stmt = $conn->prepare("SELECT * FROM comments WHERE id=?");
+$stmt = $conn->prepare("SELECT * FROM comments WHERE id = ?");
 $stmt->bind_param("i", $cid);
 $stmt->execute();
 $c = $stmt->get_result()->fetch_assoc();
 
 if (!$c) die("Không tìm thấy bình luận.");
 
-if ($_SESSION['user']['id'] != $c['user_id']) die("Bạn không có quyền sửa bình luận.");
+if ($_SESSION['user']['id'] != $c['user_id']) {
+    die("Bạn không có quyền sửa bình luận này.");
+}
 
-// Lấy ảnh cũ
-$oldImgQ = $conn->query("SELECT * FROM comment_images WHERE comment_id=$cid");
-$oldImage = $oldImgQ->fetch_assoc();
-
-
-// ================== SUBMIT ==================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $content = trim($_POST['content']);
@@ -70,61 +68,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<div class="profile-container" style="max-width:700px;">
+<div style="width:700px; margin:15px auto 15px auto;">
+    <a href="javascript:history.back()" 
+       style="display:inline-block; font-size:3em; text-decoration:none; color:#1877f2;">
+       ←
+    </a>
+</div>
 
-    <h2>Sửa bình luận</h2>
+<div class="cmt-edit-container">
 
-    <form method="post" enctype="multipart/form-data">
+    <h2 class="cmt-edit-title">✏️ Sửa bình luận</h2>
 
-        <textarea name="content" rows="4"
-          style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
-<?= htmlspecialchars($c['content']) ?></textarea>
+    <form method="post" class="cmt-edit-form">
 
-        <!-- CHỈ HIỂN THỊ ẢNH & NÚT KHI CÓ ẢNH CŨ -->
-        <?php if ($oldImage): ?>
+        <textarea name="content" class="cmt-edit-textarea" rows="4"><?= htmlspecialchars($c['content']) ?></textarea>
 
-            <h3>Ảnh của bình luận</h3>
-
-            <div id="imgBox" style="margin-bottom:10px;">
-                <img id="previewImage"
-                     src="<?= $oldImage['image_path'] ?>"
-                     style="max-width:220px;border-radius:8px;margin-bottom:10px;display:block;">
-            </div>
-
-            <button type="button" id="btnReplace"
-                style="padding:6px 10px;background:#007bff;color:white;border:none;border-radius:6px;cursor:pointer;">
-                Thay ảnh
-            </button>
-
-            <input type="file" name="new_image" id="newImageInput"
-                   accept="image/*" style="display:none;">
-
-        <?php endif; ?>
-
-        <br><br>
-        <button class="btn-send">Lưu</button>
-        <br><br>
-        <a href="forum_view.php?id=<?= $post_id ?>">Hủy</a>
+        <div class="cmt-edit-actions">
+            <button class="cmt-edit-save">💾 Lưu thay đổi</button>
+            <a href="javascript:history.back()" class="cmt-edit-cancel">Hủy</a>
+        </div>
 
     </form>
 
 </div>
-
-<script>
-// Chỉ có nếu có ảnh cũ
-const replaceBtn = document.getElementById("btnReplace");
-if (replaceBtn) {
-    const newInput = document.getElementById("newImageInput");
-    replaceBtn.onclick = () => newInput.click();
-
-    newInput.addEventListener("change", function () {
-        const file = this.files[0];
-        if (!file) return;
-
-        const url = URL.createObjectURL(file);
-        document.getElementById("previewImage").src = url;
-    });
-}
-</script>
 
 <?php include 'includes/footer.php'; ?>

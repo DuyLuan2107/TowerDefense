@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_file'])) {
 
 ?>
 
-<link rel="stylesheet" href="css/post_edit.css">
+
 
 <div style="width:700px; margin:0px auto 15px auto;">
     <a href="javascript:history.back()" 

@@ -34,7 +34,7 @@ if (session_status() === PHP_SESSION_NONE) {
 .navbar {
     width: 100%;
     background: linear-gradient(90deg, #181818, #242424, #181818);
-    padding: 12px 20px;
+    padding: 10px 0px;
     display: flex;
     justify-content: space-between;
     align-items: center;
