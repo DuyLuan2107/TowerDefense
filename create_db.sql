@@ -8,7 +8,10 @@ CREATE TABLE users (
   password VARCHAR(255),
   avatar VARCHAR(255) DEFAULT 'uploads/default.png',
   secret_code VARCHAR(255) NOT NULL,
-  last_activity DATETIME NULL
+  last_activity DATETIME NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'user',
+  last_login DATETIME NULL,
+  is_locked TINYINT(1) NOT NULL DEFAULT 0
 );
 
 CREATE TABLE scores (
@@ -22,7 +25,6 @@ CREATE TABLE scores (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- (Tuỳ chọn) Bảng posts cho Forum (nếu bạn chưa có)
 CREATE TABLE IF NOT EXISTS posts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -64,6 +66,16 @@ CREATE TABLE IF NOT EXISTS post_files (
   file_type VARCHAR(20),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS admin_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  admin_id INT NOT NULL,
+  action VARCHAR(100) NOT NULL,
+  target_table VARCHAR(50) NULL,
+  target_id INT NULL,
+  ip VARCHAR(45) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 
