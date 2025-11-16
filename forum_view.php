@@ -103,7 +103,7 @@ $comments = $stmtC2->get_result();
     <div class="fb-post">
         <div class="fb-post-header">
             <a href="user_profile.php?id=<?= $post['user_id'] ?>">
-                <img class="avatar" src="<?= $post['author_avatar'] ?: 'default-avatar.png' ?>" alt="Avatar">
+                <img class="avatar" src="<?= htmlspecialchars($post['author_avatar'] ?? 'default-avatar.png') ?>" alt="Avatar">
             </a>
 
             <div class="info">
@@ -191,7 +191,7 @@ $comments = $stmtC2->get_result();
 
             <?php if (isset($_SESSION['user'])): ?>
     <form class="fb-comment-form" method="post" enctype="multipart/form-data">
-        <img class="avatar" src="<?= $_SESSION['user']['avatar'] ?: 'default-avatar.png' ?>" alt="Avatar">
+        <img class="avatar" src="<?= htmlspecialchars($_SESSION['user']['avatar'] ?? 'default-avatar.png') ?>" alt="Avatar">
         <div class="input-container">
             <textarea name="content" rows="2" placeholder="Viết bình luận..."></textarea>
             <div class="controls">
