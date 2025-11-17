@@ -1,7 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'db/connect.php';
-include 'includes/header.php';
 
 if (!isset($_SESSION['user'])) {
     echo '<div class="cmt-edit-container"><div class="cmt-edit-msg">
@@ -73,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: forum_view.php?id=".$post_id);
     exit;
 }
+include 'includes/header.php';
 ?>
 
 <div style="width:700px; margin:15px auto;">

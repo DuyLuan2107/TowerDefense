@@ -26,7 +26,7 @@ $isGamePage = ($currentPage === 'game.php');
                 <i class="fa-solid fa-circle-user"></i> 
                 Xin chào, <strong><?php echo htmlspecialchars($_SESSION['user']['name']); ?></strong>
             </span>
-            <a href="auth.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
+            <a href="logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         <?php else: ?>
             <a href="auth.php" class="login-btn"><i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập / Đăng Ký</a>
         <?php endif; ?>
@@ -40,7 +40,7 @@ $isGamePage = ($currentPage === 'game.php');
 </nav>
 
 <?php if (!$isGamePage): ?>
-<audio id="bg-music" loop autoplay muted>
+<audio id="bg-music" loop>
     <source src="assets/music/game-bgm.mp3" type="audio/mpeg">
 </audio>
 <audio id="hover-sound" muted>
@@ -798,62 +798,6 @@ body {
     color: #ccc;
     border-color: #4a4a5e;
 }
-</style>
-
-
-<?php if (!$isGamePage): ?>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // Lấy các element âm thanh
-    const bgMusic = document.getElementById('bg-music');
-    const hoverSound = document.getElementById('hover-sound');
-    const volumeControl = document.getElementById('volume-control');
-    // Kiểm tra xem volumeControl có tồn tại không (vì nó bị ẩn ở trang game)
-    if (!volumeControl) return; 
-    
-    const volumeIcon = volumeControl.querySelector('i');
-    let isMuted = true;
-
-    // 1. Logic Nút Mute/Unmute
-    volumeControl.addEventListener('click', () => {
-        isMuted = !isMuted; 
-
-        if (isMuted) {
-            bgMusic.pause(); 
-            bgMusic.muted = true;
-            hoverSound.muted = true;
-            volumeIcon.classList.remove('fa-volume-high');
-            volumeIcon.classList.add('fa-volume-xmark');
-        } else {
-            let playPromise = bgMusic.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.warn("Lỗi Autoplay nhạc nền:", error);
-                });
-            }
-            bgMusic.muted = false;
-            hoverSound.muted = false;
-            volumeIcon.classList.remove('fa-volume-xmark');
-            volumeIcon.classList.add('fa-volume-high');
-        }
-    });
-
-    // 2. Logic Âm thanh "Pop" khi Hover
-    // Lấy TẤT CẢ các nút có thể click trên toàn trang
-    const buttons = document.querySelectorAll(
-        '.navbar a, .btn-play, .btn-cta-register, .btn-community, .btn-send, .form-box button, .pagination a'
-    );
-    
-    buttons.forEach(button => {
-        button.addEventListener('mouseenter', () => {
-            if (!isMuted) { 
-                hoverSound.currentTime = 0; 
-                hoverSound.play().catch(e => console.warn("Lỗi âm thanh hover", e));
-            }
-        });
-    });
-});
 
 /* =====================================================
     CSS CHO ADMIN CONTACTS (admin_contacts.php)
@@ -987,5 +931,69 @@ document.addEventListener('DOMContentLoaded', () => {
     color: #888;
     padding: 30px;
 }
+</style>
+
+
+<?php if (!$isGamePage): ?>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const bgMusic = document.getElementById('bg-music');
+    const hoverSound = document.getElementById('hover-sound');
+    const volumeControl = document.getElementById('volume-control');
+    if (!volumeControl) return;
+
+    const volumeIcon = volumeControl.querySelector('i');
+
+    // Lấy trạng thái đã lưu (true/false)
+    let isMuted = localStorage.getItem('soundMuted') === 'true';
+
+    // Áp dụng trạng thái ngay khi load trang
+    if (isMuted) {
+        bgMusic.muted = true;
+        hoverSound.muted = true;
+        volumeIcon.className = "fa-solid fa-volume-xmark";
+    } else {
+        bgMusic.muted = false;
+        hoverSound.muted = false;
+        bgMusic.play().catch(()=>{});
+        volumeIcon.className = "fa-solid fa-volume-high";
+    }
+
+    // Bấm nút toggle
+    volumeControl.addEventListener('click', () => {
+        isMuted = !isMuted;
+
+        if (isMuted) {
+            bgMusic.muted = true;
+            bgMusic.pause();
+            hoverSound.muted = true;
+            volumeIcon.className = "fa-solid fa-volume-xmark";
+        } else {
+            bgMusic.muted = false;
+            hoverSound.muted = false;
+            bgMusic.play().catch(()=>{});
+            volumeIcon.className = "fa-solid fa-volume-high";
+        }
+
+        // LƯU trạng thái
+        localStorage.setItem('soundMuted', isMuted);
+    });
+
+    // Âm pop khi hover
+    const buttons = document.querySelectorAll(
+        '.navbar a, .btn-play, .btn-cta-register, .btn-community, .btn-send, .form-box button, .pagination a'
+    );
+    
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', () => {
+            if (!isMuted) {
+                hoverSound.currentTime = 0;
+                hoverSound.play().catch(()=>{});
+            }
+        });
+    });
+
+});
 </script>
 <?php endif; ?>
