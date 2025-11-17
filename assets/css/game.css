@@ -1,23 +1,15 @@
 /* Canh giữa canvas, tránh kéo giãn vô ý */
 #gameCanvas {
   display: block;
-  margin: -20px auto 20px;   /* <- thay vì margin: 0 auto; */
+  margin: -20px auto 20px;
   max-width: 100%;
   height: auto;
 }
 
 /* Trang game nên bỏ bớt padding để đỡ mất diện tích */
 .container {
-  padding: 20px;           /* đang có 20px; nếu vẫn chật có thể giảm còn 10px */
-}
-
-/* Nếu vẫn muốn tuyệt đối không scroll dọc ở trang game: */
-/* body.game-page { overflow: hidden; }  (chỉ bật cho route trang game) */
-
-.container {
   padding: 20px;
 }
-
 
 .overlay {
   position: fixed;
@@ -29,6 +21,7 @@
   z-index: 9999;
 }
 .overlay.hidden { display: none; }
+
 .overlay-inner {
   background: #fff;
   width: min(960px, 92vw);
@@ -40,26 +33,17 @@
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+
 .col h3 { margin: 0 0 10px; }
-.lb-table { width: 100%; border-collapse: collapse; }
-.lb-table th, .lb-table td {
-  padding: 8px;
-  border-bottom: 1px solid #eee;
-  text-align: left;
-}
-.lb-table th:nth-child(3),
-.lb-table td:nth-child(3) {
-  text-align: right;
-}
 .muted { color: #666; font-size: 0.95em; }
-.your-rank {
-  margin-top: 8px;
-  padding: 8px;
-  background: #f6f9ff;
-  border: 1px solid #dbe7ff;
-  border-radius: 8px;
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
 }
-.actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+
 .btn {
   padding: 10px 14px;
   border-radius: 10px;
@@ -75,3 +59,106 @@
   border-color: #2563eb;
 }
 .btn:hover { filter: brightness(0.98); }
+
+/* ===============================
+   🎖️ BẢNG XẾP HẠNG – NÂNG CẤP UI
+   =============================== */
+
+/* ===============================
+   🎖️ BẢNG XẾP HẠNG – FIX LỆCH CỘT
+   =============================== */
+
+#lbStatus {
+  color: #888;
+  font-size: 0.95em;
+}
+
+/* Khung bảng */
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  animation: fadeIn 0.4s ease;
+
+  table-layout: fixed;   /* 💥 FIX LỆCH CỘT */
+}
+
+/* Header */
+.lb-table thead {
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  color: white;
+}
+
+.lb-table th {
+  padding: 12px 10px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* Hàng dữ liệu */
+.lb-table td {
+  padding: 10px;
+  font-size: 14px;
+  border-bottom: 1px solid #f1f1f1;
+  white-space: nowrap;      /* không xuống dòng lung tung */
+  overflow: hidden;
+  text-overflow: ellipsis;  /* nếu tên dài thì ... */
+}
+
+/* Hover hiệu ứng */
+.lb-table tbody tr:hover {
+  background: #f6f9ff;
+  transition: 0.2s;
+}
+
+/* Tô màu top 3 (áp dụng cho TR – giữ nguyên độ thẳng cột) */
+.lb-table tbody tr:nth-child(1) {
+  background: #fff7d6;
+  font-weight: 600;
+}
+.lb-table tbody tr:nth-child(2) {
+  background: #f0f7ff;
+}
+.lb-table tbody tr:nth-child(3) {
+  background: #f9f1ff;
+}
+
+* Column widths chuẩn để điểm nằm giữa */
+.lb-table th:nth-child(1),
+.lb-table td:nth-child(1) {
+  width: 50px;     /* STT nhỏ */
+  text-align: center;
+}
+
+.lb-table th:nth-child(2),
+.lb-table td:nth-child(2) {
+  width: 55%;      /* tên người chơi chiếm nhiều */
+  text-align: left;
+}
+
+.lb-table th:nth-child(3),
+.lb-table td:nth-child(3) {
+  width: 25%;      /* điểm chiếm 1 phần hợp lý */
+  text-align: center; /* 👈 đây là phần giúp số nằm chính giữa */
+}
+
+/* Khung "Xếp hạng của bạn" */
+.your-rank {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #e8f0ff;
+  border-left: 4px solid #2563eb;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
