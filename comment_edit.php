@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (strpos($mime, "image/") === 0) {
 
-            $dir = "uploads/comment_images/";
+            $dir = "uploads/comments/";
             if (!is_dir($dir)) mkdir($dir, 0777, true);
 
             $newFile = $dir . time() . "_" . rand(1000,9999) . "." . $ext;

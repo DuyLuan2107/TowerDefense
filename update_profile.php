@@ -19,7 +19,7 @@ if (isset($_POST['change_avatar'])) {
 
     if (!empty($_FILES['avatar']['name'])) {
         $file = $_FILES['avatar'];
-        $filename = "uploads/" . time() . "_" . basename($file['name']);
+        $filename = "uploads/avatar/" . time() . "_" . basename($file['name']);
         move_uploaded_file($file['tmp_name'], $filename);
 
         $query = $conn->prepare("UPDATE users SET avatar=? WHERE id=?");
