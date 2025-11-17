@@ -23,7 +23,7 @@ if (!isset($_SESSION['user'])) {
 $user = $_SESSION['user'];
 $user_id = $user['id'];
 
-$avatar = !empty($user['avatar']) ? $user['avatar'] : 'uploads/default.png';
+$avatar = !empty($user['avatar']) ? $user['avatar'] : 'uploads/avatar/default.png';
 
 /* MỞ FORM KHI CÓ LỖI HOẶC THÀNH CÔNG */
 $forceOpen = isset($_GET['open']);

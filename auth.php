@@ -66,7 +66,7 @@ if (isset($_POST['register'])) {
         if ($check_res->num_rows > 0) {
             // $message = "<div class='auth-message error'>❌ Email đã tồn tại!</div>"; // Đã xóa
         } else {
-            $avatarPath = "uploads/default.png";
+            $avatarPath = "uploads/avatar/default.png";
             $upload_ok = true;
 
             // Xử lý Upload Avatar
@@ -80,7 +80,7 @@ if (isset($_POST['register'])) {
                     $upload_ok = false;
                 } else {
                     $newFile = "avatar_".time().rand(1000,9999).".$ext";
-                    $upload = "uploads/$newFile";
+                    $upload = "uploads/avatar/$newFile";
                     if (!move_uploaded_file($file['tmp_name'], $upload)) {
                          $upload_ok = false;
                     } else {

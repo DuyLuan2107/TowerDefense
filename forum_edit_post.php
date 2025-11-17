@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_file'])) {
 
         // Upload file mới
         if (!empty($_FILES['files']['name'][0])) {
-            $uploadDir = "uploads/";
+            $uploadDir = "uploads/posts/";
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
             foreach ($_FILES['files']['name'] as $i => $name) {

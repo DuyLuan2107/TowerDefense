@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
 
             if (strpos($mime, "image/") === 0) {
                 $ext = strtolower(pathinfo($_FILES['comment_image']['name'], PATHINFO_EXTENSION));
-                $dir = "uploads/comment_images/";
+                $dir = "uploads/comments/";
                 if (!is_dir($dir)) mkdir($dir, 0777, true);
                 $newName = time() . "_" . rand(1000,9999) . "." . $ext;
                 $path = $dir . $newName;
@@ -191,7 +191,7 @@ $comments = $stmtC2->get_result();
 
             <?php if (isset($_SESSION['user'])): ?>
     <form class="fb-comment-form" method="post" enctype="multipart/form-data">
-        <img class="avatar" src="<?= htmlspecialchars($_SESSION['user']['avatar'] ?? 'uploads/default.png') ?>" alt="Avatar">
+        <img class="avatar" src="<?= htmlspecialchars($_SESSION['user']['avatar'] ?? 'uploads/avatar/default.png') ?>" alt="Avatar">
         <div class="input-container">
             <textarea name="content" rows="2" placeholder="Viết bình luận..."></textarea>
             <div class="controls">
