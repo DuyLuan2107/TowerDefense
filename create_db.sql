@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(100),
   email VARCHAR(100) UNIQUE,
   password VARCHAR(255),
-  avatar VARCHAR(255) DEFAULT 'uploads/default.png',
+  avatar VARCHAR(255) DEFAULT 'uploads/avatar/default.png',
   secret_code VARCHAR(255) NOT NULL,
   last_activity DATETIME NULL,
   role VARCHAR(20) NOT NULL DEFAULT 'user',
@@ -86,26 +86,26 @@ CREATE TABLE IF NOT EXISTS admin_logs (
 
 -- SAMPLE USERS (20)
 INSERT INTO users (name, email, password, secret_code, avatar, role) VALUES
-('Duy Luân', 'luan@gmail.com.com', '$2y$10$abcdefghijk1234567890luan', 'sc_1a2b3c4d5e', NULL, 'admin'),
-('Trọng Hoài', 'hoai@gmail.com.com', '$2y$10$abcdefghijk1234567890hoai', 'sc_2b3c4d5e6f', NULL, 'user'),
-('Minh Trí', 'tri@gmail.com.com', '$2y$10$abcdefghijk1234567890tri', 'sc_3c4d5e6f7g', NULL, 'user'),
-('Anh Khoa', 'khoa@gmail.com.com', '$2y$10$abcdefghijk1234567890khoa', 'sc_4d5e6f7g8h', NULL, 'user'),
-('Vĩnh Thuận', 'thuan@gmail.com.com', '$2y$10$abcdefghijk1234567890thuan', 'sc_5e6f7g8h9i', NULL, 'user'),
-('Hải Đăng', 'dang@gmail.com.com', '$2y$10$abcdefghijk1234567890dang', 'sc_6f7g8h9i0j', NULL, 'user'),
-('Bảo Nam', 'nam@gmail.com.com', '$2y$10$abcdefghijk1234567890nam', 'sc_7g8h9i0j1k', NULL, 'user'),
-('Hữu Lộc', 'loc@gmail.com.com', '$2y$10$abcdefghijk1234567890loc', 'sc_8h9i0j1k2l', NULL, 'user'),
-('Thanh Phong', 'phong@gmail.com.com', '$2y$10$abcdefghijk1234567890phong', 'sc_9i0j1k2l3m', NULL, 'user'),
-('Hồng Nhung', 'nhung@gmail.com.com', '$2y$10$abcdefghijk1234567890nhung', 'sc_0j1k2l3m4n', NULL, 'user'),
-('Quang Minh', 'minh@gmail.com.com', '$2y$10$abcdefghijk1234567890minh', 'sc_a1b2c3d4e5', NULL, 'user'),
-('Ngọc Diệp', 'diep@gmail.com.com', '$2y$10$abcdefghijk1234567890diep', 'sc_b2c3d4e5f6', NULL, 'user'),
-('Phương Thảo', 'thao@gmail.com.com', '$2y$10$abcdefghijk1234567890thao', 'sc_c3d4e5f6g7', NULL, 'user'),
-('Đức Tài', 'tai@gmail.com.com', '$2y$10$abcdefghijk1234567890tai', 'sc_d4e5f6g7h8', NULL, 'user'),
-('Tấn Dũng', 'dung@gmail.com.com', '$2y$10$abcdefghijk1234567890dung', 'sc_e5f6g7h8i9', NULL, 'user'),
-('Bảo Vy', 'vy@gmail.com.com', '$2y$10$abcdefghijk1234567890vy', 'sc_f6g7h8i9j0', NULL, 'user'),
-('Quốc Huy', 'huy@gmail.com.com', '$2y$10$abcdefghijk1234567890huy', 'sc_g7h8i9j0k1', NULL, 'user'),
-('Thảo Linh', 'linh@gmail.com.com', '$2y$10$abcdefghijk1234567890linh', 'sc_h8i9j0k1l2', NULL, 'user'),
-('Đăng Khoa', 'dkhoa@gmail.com.com', '$2y$10$abcdefghijk1234567890dkhoa', 'sc_i9j0k1l2m3', NULL, 'user'),
-('Tuấn Kiệt', 'kiet@gmail.com.com', '$2y$10$abcdefghijk1234567890kiet', 'sc_j0k1l2m3n4', NULL, 'user');
+('Duy Luân', 'luan@gmail.com.com', '$2y$10$abcdefghijk1234567890luan', 'sc_1a2b3c4d5e', 'uploads/avatar/1.jpg', 'admin'),
+('Trọng Hoài', 'hoai@gmail.com.com', '$2y$10$abcdefghijk1234567890hoai', 'sc_2b3c4d5e6f',  'uploads/avatar/2.jpg', 'user'),
+('Minh Trí', 'tri@gmail.com.com', '$2y$10$abcdefghijk1234567890tri', 'sc_3c4d5e6f7g',  'uploads/avatar/3.jpg', 'user'),
+('Anh Khoa', 'khoa@gmail.com.com', '$2y$10$abcdefghijk1234567890khoa', 'sc_4d5e6f7g8h',  'uploads/avatar/4.jpg', 'user'),
+('Vĩnh Thuận', 'thuan@gmail.com.com', '$2y$10$abcdefghijk1234567890thuan', 'sc_5e6f7g8h9i',  'uploads/avatar/5.jpg', 'user'),
+('Hải Đăng', 'dang@gmail.com.com', '$2y$10$abcdefghijk1234567890dang', 'sc_6f7g8h9i0j',  'uploads/avatar/6.jpg', 'user'),
+('Bảo Nam', 'nam@gmail.com.com', '$2y$10$abcdefghijk1234567890nam', 'sc_7g8h9i0j1k',  'uploads/avatar/7.jpg', 'user'),
+('Hữu Lộc', 'loc@gmail.com.com', '$2y$10$abcdefghijk1234567890loc', 'sc_8h9i0j1k2l',  'uploads/avatar/8.jpg', 'user'),
+('Thanh Phong', 'phong@gmail.com.com', '$2y$10$abcdefghijk1234567890phong', 'sc_9i0j1k2l3m',  'uploads/avatar/9.jpg', 'user'),
+('Hồng Nhung', 'nhung@gmail.com.com', '$2y$10$abcdefghijk1234567890nhung', 'sc_0j1k2l3m4n',  'uploads/avatar/10.jpg', 'user'),
+('Quang Minh', 'minh@gmail.com.com', '$2y$10$abcdefghijk1234567890minh', 'sc_a1b2c3d4e5',  'uploads/avatar/11.jpg', 'user'),
+('Ngọc Diệp', 'diep@gmail.com.com', '$2y$10$abcdefghijk1234567890diep', 'sc_b2c3d4e5f6',  'uploads/avatar/12.jpg', 'user'),
+('Phương Thảo', 'thao@gmail.com.com', '$2y$10$abcdefghijk1234567890thao', 'sc_c3d4e5f6g7',  'uploads/avatar/13.jpg', 'user'),
+('Đức Tài', 'tai@gmail.com.com', '$2y$10$abcdefghijk1234567890tai', 'sc_d4e5f6g7h8',  'uploads/avatar/14.jpg', 'user'),
+('Tấn Dũng', 'dung@gmail.com.com', '$2y$10$abcdefghijk1234567890dung', 'sc_e5f6g7h8i9',  'uploads/avatar/15.jpg', 'user'),
+('Bảo Vy', 'vy@gmail.com.com', '$2y$10$abcdefghijk1234567890vy', 'sc_f6g7h8i9j0',  'uploads/avatar/15.jpg', 'user'),
+('Quốc Huy', 'huy@gmail.com.com', '$2y$10$abcdefghijk1234567890huy', 'sc_g7h8i9j0k1',  'uploads/avatar/12.jpg', 'user'),
+('Thảo Linh', 'linh@gmail.com.com', '$2y$10$abcdefghijk1234567890linh', 'sc_h8i9j0k1l2',  'uploads/avatar/14.jpg', 'user'),
+('Đăng Khoa', 'dkhoa@gmail.com.com', '$2y$10$abcdefghijk1234567890dkhoa', 'sc_i9j0k1l2m3',  'uploads/avatar/15.jpg', 'user'),
+('Tuấn Kiệt', 'kiet@gmail.com.com', '$2y$10$abcdefghijk1234567890kiet', 'sc_j0k1l2m3n4',  'uploads/avatar/2.jpg', 'user');
 
 -- SCORES (samples)
 INSERT INTO scores (user_id, score, enemies_killed, gold_left, duration_seconds) VALUES
@@ -219,3 +219,27 @@ INSERT INTO comments (post_id, user_id, content) VALUES
 (18,1,'Tháp 3 mạnh thiệt.'),
 (19,3,'Hay quá admin.'),
 (20,2,'Game vui thật.');
+
+INSERT INTO post_files (post_id, file_path, file_type) VALUES
+(1, 'uploads/posts/1.mp4', 'video'),
+(2, 'uploads/posts/2.png', 'image'),
+(3, 'uploads/posts/3.png', 'image'),
+(5, 'uploads/posts/5.png', 'image'),
+(6, 'uploads/posts/6.png', 'image'),
+(8, 'uploads/posts/8.png', 'image'),
+(10, 'uploads/posts/11.png', 'image'),
+(13, 'uploads/posts/13.png', 'image'),
+(17, 'uploads/posts/16.png', 'image'),
+(20, 'uploads/posts/14.png', 'image');
+
+INSERT INTO comment_images (comment_id, image_path) VALUES
+(1, 'uploads/comments/1.png'),
+(2, 'uploads/comments/4.png'),
+(3, 'uploads/comments/3.png'),
+(5, 'uploads/comments/5.png'),
+(7, 'uploads/comments/6.png'),
+(9, 'uploads/comments/7.png'),
+(11, 'uploads/comments/3.png'),
+(13, 'uploads/comments/13.png'),
+(15, 'uploads/comments/14.png'),
+(19, 'uploads/comments/15.png');
