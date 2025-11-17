@@ -11,7 +11,7 @@
       <div id="lbStatus" class="muted">Đang tải BXH...</div>
       <table id="lbTable" class="lb-table hidden">
         <thead>
-          <tr><th>#</th><th>Người chơi</th><th>Điểm cao nhất</th></tr>
+          <tr><th>XH</th><th>Người chơi</th><th>Điểm cao nhất</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -22,9 +22,9 @@
       <h3>🎉 Vượt qua các màn!</h3>
       <p id="finalScoreText"></p>
       <div class="actions">
-        <button id="btnOk" class="btn primary">OK</button>
+        <button id="btnReplay" class="btn replay">Chơi lại</button>
         <a id="btnShare" class="btn" href="#" style="display:none">Đăng bài khoe điểm</a>
-        <button id="btnReplay" class="btn">Chơi lại</button>
+        <button id="btnOk" class="btn primary">OK</button>
       </div>
     </div>
   </div>
