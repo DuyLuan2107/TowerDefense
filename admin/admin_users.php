@@ -201,10 +201,12 @@ body{
           <tr>
             <td><?=htmlspecialchars($r['id'])?></td>
             <td>
-              <?php
-                $avatar = $r['avatar'] ?: 'uploads/default.png';
-              ?>
-              <img class="avatar" src="<?=htmlspecialchars($avatar)?>" alt="avatar">
+            <?php
+                $avatarPath = (!empty($r['avatar']) && file_exists("../" . $r['avatar']))
+                    ? "../" . $r['avatar']
+                    : "../uploads/default.png";
+            ?>
+          <img class="avatar" src="<?= htmlspecialchars($avatarPath) ?>" alt="avatar">
               <strong><?=htmlspecialchars($r['name'])?></strong>
               <div class="small-muted">id <?=htmlspecialchars($r['id'])?></div>
             </td>
