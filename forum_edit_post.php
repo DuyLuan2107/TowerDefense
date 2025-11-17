@@ -1,7 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'db/connect.php';
-include 'includes/header.php';
 
 if (!isset($_SESSION['user'])) {
     echo '<div class="profile-container"><div class="profile-message">
@@ -111,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_file'])) {
         exit;
     }
 }
-
+include 'includes/header.php';
 ?>
 
 

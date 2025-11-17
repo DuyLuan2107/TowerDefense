@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'db/connect.php';
-include 'includes/header.php';
+
 
 function formatDateVN($datetime) {
     $date = new DateTime($datetime);
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
     }
   }
 }
-
+include 'includes/header.php';
 // Lấy bình luận
 $sqlC = "SELECT c.*, u.name AS author, u.avatar AS author_avatar 
          FROM comments c JOIN users u ON u.id = c.user_id 
