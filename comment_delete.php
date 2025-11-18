@@ -15,13 +15,26 @@ $c = $stmt->get_result()->fetch_assoc();
 
 if (!$c) die("Không tìm thấy bình luận.");
 
-// Kiểm tra quyền
-if (!isset($_SESSION['user']) || $_SESSION['user']['id'] != $c['user_id']) {
-    die("Bạn không có quyền xoá bình luận này.");
+// --- KIỂM TRA QUYỀN ---
+// Logic: Phải đăng nhập VÀ (là tác giả bài viết HOẶC là admin)
+$isLoggedIn = isset($_SESSION['user']);
+$isAuthor = $isLoggedIn && ($_SESSION['user']['id'] == $c['user_id']);
+$isAdmin = $isLoggedIn && (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin');
+
+if (!$isLoggedIn) {
+    die("Bạn cần đăng nhập.");
 }
 
+if (!$isAuthor && !$isAdmin) {
+    die("Bạn không có quyền xoá bình luận này.");
+}
+// ----------------------
+
 // Xoá
-$conn->query("DELETE FROM comments WHERE id = $cid");
+// Sử dụng Prepared Statement để an toàn hơn (dù $cid đã ép kiểu int)
+$stmtDel = $conn->prepare("DELETE FROM comments WHERE id = ?");
+$stmtDel->bind_param("i", $cid);
+$stmtDel->execute();
 
 header("Location: forum_view.php?id=".$post_id);
 exit;

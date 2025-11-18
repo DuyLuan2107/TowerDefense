@@ -101,36 +101,47 @@ if (isset($_POST['register'])) { // Code này sẽ chạy nhờ thẻ input hidd
 // ----------------------------------------------------
 // 3. Xử lý ĐĂNG NHẬP
 // ----------------------------------------------------
+if (isset($_GET['locked'])) {
+    $message = "<div class='auth-message error'>❌ Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.</div>";
+}
+
 if (isset($_POST['login'])) {
-    $login_email_sticky = $_POST['email']; // <-- THAY ĐỔI 1
+    $login_email_sticky = $_POST['email'];
     $password = $_POST['password'];
     $remember = isset($_POST['remember']);
 
-    $stmt = $conn->prepare("SELECT id, name, email, role, password FROM users WHERE email = ?");
-    $stmt->bind_param("s", $login_email_sticky); // <-- THAY ĐỔI 2
+    $stmt = $conn->prepare("SELECT id, name, email, role, password, is_locked FROM users WHERE email = ?");
+    $stmt->bind_param("s", $login_email_sticky);
     $stmt->execute();
     $res = $stmt->get_result();
 
     if ($res && $res->num_rows > 0) {
         $user = $res->fetch_assoc();
+
+        // KIỂM TRA TÀI KHOẢN BỊ KHÓA
+        if ($user['is_locked'] == 1) {
+            $message = "<div class='auth-message error'>❌ Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.</div>";
+            goto skip_login;
+        }
+
         if (password_verify($password, $user['password'])) {
-            // Đăng nhập thành công
             $_SESSION['user'] = [
-                'id' => $user['id'],
-                'name' => $user['name'],
+                'id'    => $user['id'],
+                'name'  => $user['name'],
                 'email' => $user['email'],
-                'role' => $user['role']
+                'role'  => $user['role']
             ];
 
-            // Xử lý "Ghi nhớ đăng nhập"
+            // Ghi nhớ đăng nhập
             if ($remember) {
                 $token = bin2hex(random_bytes(64));
-                $expiry_time = time() + (86400 * 30); 
+                $expiry_time = time() + (86400 * 30);
                 $expiry_db = date("Y-m-d H:i:s", $expiry_time);
-                setcookie('remember_token', $token, $expiry_time, "/", "", false, true); 
-                
+                setcookie('remember_token', $token, $expiry_time, "/", "", false, true);
+
                 $user_id = $user['id'];
                 $conn->query("DELETE FROM login_tokens WHERE user_id = $user_id");
+
                 $stmt_token = $conn->prepare("INSERT INTO login_tokens (user_id, token, expiry) VALUES (?, ?, ?)");
                 $stmt_token->bind_param("iss", $user_id, $token, $expiry_db);
                 $stmt_token->execute();
@@ -144,6 +155,8 @@ if (isset($_POST['login'])) {
     } else {
         $message = "<div class='auth-message error'>❌ Email không tồn tại!</div>";
     }
+
+    skip_login:
 }
 
 include "includes/header.php"; // Navbar
