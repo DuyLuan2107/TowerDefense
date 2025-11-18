@@ -1,11 +1,11 @@
 <?php
 session_start();
-require "db/connect.php"; // Chắc chắn rằng $conn là đối tượng mysqli
+require "db/connect.php"; // Kết nối CSDL
 
 $message = "";
 
 // ----------------------------------------------------
-// 1. Xử lý cookie remember token
+// 1. Xử lý cookie remember token (Tự động đăng nhập)
 // ----------------------------------------------------
 if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
@@ -34,81 +34,71 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
 }
 
 // ----------------------------------------------------
-// 2. Xử lý đăng ký (Đã xóa lỗi $message)
+// 2. Xử lý ĐĂNG KÝ
 // ----------------------------------------------------
-if (isset($_POST['register'])) {
+if (isset($_POST['register'])) { // Code này sẽ chạy nhờ thẻ input hidden bên dưới
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
     $secret = trim($_POST['secret_code']);
     $password = $_POST['password'];
     $confirm = $_POST['confirm_password'];
 
-    // --- Server-side Validation ---
-    
-    if (!empty($name) && !preg_match('/^[\p{L}\p{N}_ ]+$/u', $name)) {
-        // Lỗi: Tên không hợp lệ
-    } 
-    elseif (!empty($secret) && strlen($secret) < 4) {
-        // Lỗi: Mã bí mật
-    } 
-    elseif (strlen($password) < 6) {
-        // Lỗi: Mật khẩu
+    // Server-side Validation (Lớp bảo vệ thứ 2)
+    if (empty($name) || empty($email) || empty($password)) {
+         $message = "<div class='auth-message error'>❌ Vui lòng điền đầy đủ thông tin!</div>";
     }
     elseif ($password !== $confirm) {
-        // Lỗi: Xác nhận
+         $message = "<div class='auth-message error'>❌ Mật khẩu xác nhận không khớp!</div>";
     } 
     else {
+        // Kiểm tra Email đã tồn tại chưa
         $stmt_check = $conn->prepare("SELECT id FROM users WHERE email = ?");
         $stmt_check->bind_param("s", $email);
         $stmt_check->execute();
-        $check_res = $stmt_check->get_result();
-        
-        if ($check_res->num_rows > 0) {
-            // $message = "<div class='auth-message error'>❌ Email đã tồn tại!</div>"; // Đã xóa
+        if ($stmt_check->get_result()->num_rows > 0) {
+            $message = "<div class='auth-message error'>❌ Email này đã được sử dụng!</div>";
         } else {
-            $avatarPath = "uploads/avatar/default.png";
-            $upload_ok = true;
-
             // Xử lý Upload Avatar
+            $avatarPath = "uploads/default.png"; // Ảnh mặc định
+            
             if (!empty($_FILES['avatar']['name'])) {
-                $file = $_FILES['avatar'];
-                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                $target_dir = "uploads/";
+                // Tạo tên file ngẫu nhiên để tránh trùng
+                $file_extension = pathinfo($_FILES["avatar"]["name"], PATHINFO_EXTENSION);
+                $new_filename = uniqid() . '.' . $file_extension;
+                $target_file = $target_dir . $new_filename;
                 
-                if (!in_array($ext, ["jpg","jpeg","png"])) {
-                    $upload_ok = false;
-                } elseif ($file['size'] > 2*1024*1024) {
-                    $upload_ok = false;
-                } else {
-                    $newFile = "avatar_".time().rand(1000,9999).".$ext";
-                    $upload = "uploads/avatar/$newFile";
-                    if (!move_uploaded_file($file['tmp_name'], $upload)) {
-                         $upload_ok = false;
-                    } else {
-                        $avatarPath = $upload;
+                // Kiểm tra file ảnh
+                $check = getimagesize($_FILES["avatar"]["tmp_name"]);
+                if($check !== false) {
+                    if (move_uploaded_file($_FILES["avatar"]["tmp_name"], $target_file)) {
+                        $avatarPath = $target_file;
                     }
                 }
             }
+
+            // Thêm vào Database
+            $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+            $hashed_secret = password_hash($secret, PASSWORD_BCRYPT);
+            $role = 'user'; // Mặc định là user
+
+            $stmt_insert = $conn->prepare("
+                INSERT INTO users (name, email, password, avatar, secret_code, role) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            $stmt_insert->bind_param("ssssss", $name, $email, $hashed_password, $avatarPath, $hashed_secret, $role);
             
-            if (empty($message) && $upload_ok) {
-                $hashed = password_hash($password, PASSWORD_BCRYPT);
-                $secretHash = password_hash($secret, PASSWORD_BCRYPT);
-                $role = 'user';
-
-                $stmt_insert = $conn->prepare("
-                    INSERT INTO users (name, email, password, avatar, secret_code, role)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ");
-                $stmt_insert->bind_param("ssssss", $name, $email, $hashed, $avatarPath, $secretHash, $role);
-                $stmt_insert->execute();
-
-                $message = "<div class='auth-message success'>🎉 Đăng ký thành công! Hãy đăng nhập.</div>";
+            if ($stmt_insert->execute()) {
+                $message = "<div class='auth-message success'>🎉 Đăng ký thành công! Hãy đăng nhập ngay.</div>";
+            } else {
+                $message = "<div class='auth-message error'>❌ Lỗi hệ thống: " . $conn->error . "</div>";
             }
         }
     }
 }
 
 // ----------------------------------------------------
-// 3. Xử lý đăng nhập
+// 3. Xử lý ĐĂNG NHẬP
 // ----------------------------------------------------
 if (isset($_POST['login'])) {
     $email = $_POST['email'];
@@ -123,6 +113,7 @@ if (isset($_POST['login'])) {
     if ($res && $res->num_rows > 0) {
         $user = $res->fetch_assoc();
         if (password_verify($password, $user['password'])) {
+            // Đăng nhập thành công
             $_SESSION['user'] = [
                 'id' => $user['id'],
                 'name' => $user['name'],
@@ -130,11 +121,13 @@ if (isset($_POST['login'])) {
                 'role' => $user['role']
             ];
 
+            // Xử lý "Ghi nhớ đăng nhập"
             if ($remember) {
                 $token = bin2hex(random_bytes(64));
                 $expiry_time = time() + (86400 * 30); 
                 $expiry_db = date("Y-m-d H:i:s", $expiry_time);
                 setcookie('remember_token', $token, $expiry_time, "/", "", false, true); 
+                
                 $user_id = $user['id'];
                 $conn->query("DELETE FROM login_tokens WHERE user_id = $user_id");
                 $stmt_token = $conn->prepare("INSERT INTO login_tokens (user_id, token, expiry) VALUES (?, ?, ?)");
@@ -152,12 +145,11 @@ if (isset($_POST['login'])) {
     }
 }
 
-
-include "includes/header.php"; // navbar
+include "includes/header.php"; // Navbar
 ?>
 
 <style>
-/* ====== GIAO DIỆN SaaS HIỆN ĐẠI (Không đổi) ====== */
+/* ====== GIAO DIỆN SaaS HIỆN ĐẠI ====== */
 .auth-wrapper {
     min-height: calc(100vh - 120px);
     display: flex;
@@ -292,12 +284,6 @@ include "includes/header.php"; // navbar
     border-style: solid;
     border-color: #e74c3c transparent transparent transparent;
 }
-.input-tooltip.error {
-    background: #e74c3c;
-}
-.input-tooltip.error::after {
-    border-color: #e74c3c transparent transparent transparent;
-}
 .toggle-password {
     position: absolute;
     top: 50%;
@@ -312,12 +298,16 @@ include "includes/header.php"; // navbar
 .toggle-password:hover {
     color: #2575fc;
 }
+.hidden {
+    display: none;
+}
 </style>
 
 <div class="auth-wrapper">
     <div class="auth-container">
         <?= $message ?>
 
+        <!-- FORM LOGIN -->
         <div class="form-box" id="login-form">
             <h2>🔑 Đăng Nhập</h2>
             <form method="post" novalidate onsubmit="return validateLoginForm(event)">
@@ -344,10 +334,15 @@ include "includes/header.php"; // navbar
             <p>Chưa có tài khoản? <a href="#" onclick="showRegister()">Đăng ký ngay</a></p>
         </div>
 
+        <!-- FORM REGISTER -->
         <div class="form-box hidden" id="register-form">
             <h2>📝 Đăng Ký</h2>
+            <!-- Lưu ý: onsubmit gọi hàm validateFormOnSubmit -->
             <form method="post" enctype="multipart/form-data" id="register-form-data" onsubmit="validateFormOnSubmit(event)" novalidate>
                 
+                <!-- [QUAN TRỌNG] Input hidden này giúp PHP nhận biết form đăng ký đã được gửi -->
+                <input type="hidden" name="register" value="1">
+
                 <div class="input-group">
                     <input type="email" name="email" placeholder="Email" required oninput="handleEmailInput(this)">
                     <span class="input-tooltip" id="email-tip" data-default-message="Email phải đúng định dạng (@, .)">Email phải đúng định dạng (@, .)</span>
@@ -378,7 +373,7 @@ include "includes/header.php"; // navbar
                     <span class="input-tooltip" id="confirm-tip" data-default-message="Phải khớp với mật khẩu đã nhập">Phải khớp với mật khẩu đã nhập</span>
                 </div>
                 
-                <button type="submit" name="register" id="register-btn">Đăng Ký</button>
+                <button type="submit" id="register-btn">Đăng Ký</button>
             </form>
             <p>Đã có tài khoản? <a href="#" onclick="showLogin()">Đăng nhập ngay</a></p>
         </div>
@@ -386,23 +381,21 @@ include "includes/header.php"; // navbar
 </div>
 
 <script>
-// Biến toàn cục cho bộ đếm thời gian (debounce)
 let emailCheckTimer;
 
+// Chuyển đổi giữa Login và Register
 function showRegister() {
     document.getElementById("login-form").classList.add("hidden");
     document.getElementById("register-form").classList.remove("hidden");
-    clearAllErrors(); // Xóa lỗi cũ khi chuyển tab
+    clearAllErrors(); 
 }
 function showLogin() {
     document.getElementById("register-form").classList.add("hidden");
     document.getElementById("login-form").classList.remove("hidden");
-    clearAllErrors(); // Xóa lỗi cũ khi chuyển tab
+    clearAllErrors(); 
 }
 
-// ----------------------------------------------------
-// HÀM ẨN/HIỆN MẬT KHẨU
-// ----------------------------------------------------
+// Ẩn/Hiện mật khẩu
 function togglePasswordVisibility(inputId) {
     const input = document.getElementById(inputId);
     const icon = input.nextElementSibling; 
@@ -416,7 +409,7 @@ function togglePasswordVisibility(inputId) {
     }
 }
 
-// Hàm hiển thị Tooltip
+// Hiển thị/Ẩn Tooltip
 function showTooltip(id, isError, message) {
     const tooltip = document.getElementById(id);
     if (!tooltip) return;
@@ -426,7 +419,6 @@ function showTooltip(id, isError, message) {
     }
     tooltip.classList.add('visible');
 }
-// Hàm Ẩn Tooltip
 function hideTooltip(id) {
     const tooltip = document.getElementById(id);
     if (!tooltip) return;
@@ -434,36 +426,30 @@ function hideTooltip(id) {
     tooltip.textContent = tooltip.dataset.defaultMessage || tooltip.textContent;
 }
 
-// ----------------------------------------------------
-// HÀM RESET LỖI (ĐÃ SỬA LỖI $message)
-// ----------------------------------------------------
+// Xóa tất cả lỗi (Client & Server)
 function clearAllErrors() {
-    // SỬA LỖI: Ẩn thông báo lỗi Server-side (như "Sai mật khẩu")
+    // Ẩn thông báo lỗi từ PHP
     const serverMessage = document.querySelector('.auth-container .auth-message');
     if (serverMessage) {
         serverMessage.style.display = 'none';
     }
-
-    // Xóa lỗi client-side (tooltips)
+    // Ẩn tooltip và viền đỏ
     const tooltips = document.querySelectorAll('.auth-container .input-tooltip');
     tooltips.forEach(tip => {
         tip.classList.remove('visible', 'error');
         tip.textContent = tip.dataset.defaultMessage || tip.textContent;
     });
-    
-    // Xóa lỗi client-side (viền đỏ)
     const inputs = document.querySelectorAll('.auth-container input.error-border');
     inputs.forEach(input => input.classList.remove('error-border'));
 }
 
-// ----------------------------------------------------
-// HÀM VALIDATION CHO FORM ĐĂNG NHẬP
-// ----------------------------------------------------
+// Validate Form Đăng Nhập
 function validateLoginForm(event) {
     clearAllErrors(); 
     let isFormValid = true;
     const email = document.getElementById('login-email');
     const password = document.getElementById('login-pass');
+    
     if (email.value.trim() === '') {
         isFormValid = false;
         email.classList.add('error-border');
@@ -474,6 +460,7 @@ function validateLoginForm(event) {
         password.classList.add('error-border');
         showTooltip('login-pass-tip', true, 'Mật khẩu không được để trống!');
     }
+    
     if (!isFormValid) {
         event.preventDefault(); 
         return false;
@@ -481,9 +468,7 @@ function validateLoginForm(event) {
     return true; 
 }
 
-// ----------------------------------------------------
-// HÀM MỚI: BỘ ĐỆM "DEBOUNCE" CHO VIỆC GÕ EMAIL
-// ----------------------------------------------------
+// Xử lý nhập Email (Debounce)
 function handleEmailInput(inputElement) {
     clearTimeout(emailCheckTimer);
     const email = inputElement.value.trim();
@@ -497,13 +482,10 @@ function handleEmailInput(inputElement) {
 
     emailCheckTimer = setTimeout(() => {
         validateEmailRealtime(inputElement);
-    }, 500); // Đợi 500ms sau khi ngừng gõ
+    }, 500); 
 }
 
-
-// ----------------------------------------------------
-// HÀM KIỂM TRA EMAIL (AJAX - Không đổi)
-// ----------------------------------------------------
+// Kiểm tra Email qua AJAX
 async function validateEmailRealtime(inputElement) {
     const email = inputElement.value.trim();
     const tipId = 'email-tip';
@@ -521,7 +503,7 @@ async function validateEmailRealtime(inputElement) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: email })
         });
-        if (!response.ok) throw new Error('Lỗi network khi kiểm tra email');
+        if (!response.ok) throw new Error('Lỗi network');
         
         const data = await response.json();
 
@@ -535,19 +517,14 @@ async function validateEmailRealtime(inputElement) {
             return true;
         }
     } catch (error) {
-        console.error('Lỗi khi kiểm tra email:', error);
-        inputElement.classList.add('error-border');
-        showTooltip(tipId, true, 'Lỗi! Không thể kiểm tra email.');
-        return false;
+        console.error('Lỗi check email:', error);
+        return false; 
     }
 }
 
-
-// ----------------------------------------------------
-// HÀM VALIDATION ĐĂNG KÝ (ON SUBMIT)
-// ----------------------------------------------------
+// Validate Form Đăng Ký (Khi Submit)
 async function validateFormOnSubmit(event) {
-    event.preventDefault(); 
+    event.preventDefault(); // Ngăn submit mặc định để kiểm tra
     clearAllErrors(); 
     let isFormValid = true; 
 
@@ -556,8 +533,12 @@ async function validateFormOnSubmit(event) {
     const secret = document.querySelector('#register-form input[name="secret_code"]');
     const password = document.querySelector('#register-form input[name="password"]');
     const confirmPass = document.querySelector('#register-form input[name="confirm_password"]');
+    
+    // 1. Kiểm tra Email (Async)
+    const isEmailValid = await validateEmailRealtime(emailInput);
+    if (!isEmailValid) isFormValid = false;
 
-    // Chạy kiểm tra sync
+    // 2. Kiểm tra các trường khác
     const nameRegex = /^[\p{L}\p{N}_ ]+$/u;
     if (!name.value.trim()) {
         isFormValid = false;
@@ -568,32 +549,32 @@ async function validateFormOnSubmit(event) {
         name.classList.add('error-border');
         showTooltip('name-tip', true, 'Tên chỉ chứa chữ, số, khoảng trắng, gạch dưới.');
     }
+    
     if (secret.value.trim().length < 4) {
         isFormValid = false;
         secret.classList.add('error-border');
         showTooltip('secret-tip', true, 'Mã bí mật phải ≥ 4 ký tự!');
     }
+    
     if (password.value.length < 6) {
         isFormValid = false;
         password.classList.add('error-border');
         showTooltip('pass-tip', true, 'Mật khẩu phải ≥ 6 ký tự!');
     }
+    
     if (!confirmPass.value.trim()) {
          isFormValid = false;
          confirmPass.classList.add('error-border');
          showTooltip('confirm-tip', true, 'Hãy xác nhận mật khẩu!');
-    }
-    else if (password.value.length >= 6 && confirmPass.value !== password.value) {
+    } else if (password.value.length >= 6 && confirmPass.value !== password.value) {
         isFormValid = false;
         confirmPass.classList.add('error-border');
         showTooltip('confirm-tip', true, 'Mật khẩu nhập lại không khớp!');
     }
 
-    // Chạy kiểm tra async (email)
-    const isEmailValid = await validateEmailRealtime(emailInput);
-
-    // Quyết định cuối cùng
-    if (isFormValid && isEmailValid) {
+    // 3. Nếu tất cả OK -> Submit Form
+    if (isFormValid) {
+        document.getElementById('register-btn').disabled = true; // Chống spam click
         document.getElementById('register-form-data').submit();
     }
 }
