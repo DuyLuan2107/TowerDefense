@@ -13,10 +13,12 @@ if ($post_id <= 0) {
     exit;
 }
 
-// chỉ cho xoá nếu là chủ bài
 $uid = (int)$_SESSION['user']['id'];
 
-// kiểm tra chủ bài
+// --- KIỂM TRA QUYỀN ADMIN ---
+$isAdmin = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin';
+
+// Kiểm tra bài viết tồn tại và lấy người sở hữu
 $stmt = $conn->prepare("SELECT user_id FROM posts WHERE id = ?");
 $stmt->bind_param("i", $post_id);
 $stmt->execute();
@@ -27,16 +29,19 @@ if (!$res) {
     exit;
 }
 
-if ($res['user_id'] != $uid) {
-    // không phải chủ bài -> đá về list
+// Logic phân quyền:
+// Nếu KHÔNG phải chủ bài VÀ KHÔNG phải admin -> Không có quyền
+if ($res['user_id'] != $uid && !$isAdmin) {
     header("Location: forum_view.php?id=" . $post_id);
     exit;
 }
 
-// xoá bài (comments bị xoá theo nhờ FOREIGN KEY ON DELETE CASCADE)
-$stmtDel = $conn->prepare("DELETE FROM posts WHERE id = ? AND user_id = ?");
-$stmtDel->bind_param("ii", $post_id, $uid);
+// Xoá bài
+// Quan trọng: Bỏ "AND user_id = ?" để Admin có thể xoá bài của người khác
+$stmtDel = $conn->prepare("DELETE FROM posts WHERE id = ?");
+$stmtDel->bind_param("i", $post_id);
 $stmtDel->execute();
 
 header("Location: forum_list.php");
 exit;
+?>
