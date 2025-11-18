@@ -249,7 +249,8 @@ h1, h2, h3 {
 
 .btn-neutral{ background: rgba(255,255,255,0.08); color: var(--text-main); }
 .btn-neutral:hover { 
-    background: rgba(255,255,255,0.15); color: white; 
+    background: white; color: black;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);  
     border-color: var(--text-muted);
 }
 
@@ -306,9 +307,19 @@ h1, h2, h3 {
 <div class="app">
   <aside class="sidebar" role="navigation">
     <div> <div class="brand">
-          <img src="../assets/logo.png" alt="logo" style="width:52px;height:52px;object-fit:cover">
+        <?php
+        $avatarPath = $_SESSION['user']['avatar'] ?? 'uploads/avatar/default.png';
+
+        /* chuyển sang đường dẫn đúng khi ở trong admin */
+        if (strpos($avatarPath, 'uploads/') === 0) {
+            $avatarPath = '../' . $avatarPath;
+        }
+        ?>
+        <img src="<?= htmlspecialchars($avatarPath) ?>" 
+         alt="avatar"
+         style="width:52px; height:52px; border-radius:50%; object-fit:cover;">
           <div>
-            <h2>TD Command</h2>
+            <h2>Admin Panel</h2>
             <div>Operator: <?=htmlspecialchars($_SESSION['user']['name'] ?? 'Admin')?></div>
           </div>
         </div>
