@@ -3,6 +3,7 @@ session_start();
 require "db/connect.php"; // Kết nối CSDL
 
 $message = "";
+$login_email_sticky = ""; // Biến để "nhớ" email khi đăng nhập lỗi
 
 // ----------------------------------------------------
 // 1. Xử lý cookie remember token (Tự động đăng nhập)
@@ -101,12 +102,12 @@ if (isset($_POST['register'])) { // Code này sẽ chạy nhờ thẻ input hidd
 // 3. Xử lý ĐĂNG NHẬP
 // ----------------------------------------------------
 if (isset($_POST['login'])) {
-    $email = $_POST['email'];
+    $login_email_sticky = $_POST['email']; // <-- THAY ĐỔI 1
     $password = $_POST['password'];
     $remember = isset($_POST['remember']);
 
     $stmt = $conn->prepare("SELECT id, name, email, role, password FROM users WHERE email = ?");
-    $stmt->bind_param("s", $email);
+    $stmt->bind_param("s", $login_email_sticky); // <-- THAY ĐỔI 2
     $stmt->execute();
     $res = $stmt->get_result();
 
@@ -149,7 +150,7 @@ include "includes/header.php"; // Navbar
 ?>
 
 <style>
-/* ====== GIAO DIỆN SaaS HIỆN ĐẠI ====== */
+/* ... CSS của bạn (không thay đổi) ... */
 .auth-wrapper {
     min-height: calc(100vh - 120px);
     display: flex;
@@ -307,12 +308,12 @@ include "includes/header.php"; // Navbar
     <div class="auth-container">
         <?= $message ?>
 
-        <!-- FORM LOGIN -->
         <div class="form-box" id="login-form">
             <h2>🔑 Đăng Nhập</h2>
             <form method="post" novalidate onsubmit="return validateLoginForm(event)">
                 <div class="input-group">
-                    <input type="email" name="email" placeholder="Email" required id="login-email">
+                    <input type="email" name="email" placeholder="Email" required id="login-email" value="<?= htmlspecialchars($login_email_sticky) ?>">
+                    
                     <span class="input-tooltip" id="login-email-tip" data-default-message="Email không được để trống">Email không được để trống</span>
                 </div>
                 
@@ -334,13 +335,10 @@ include "includes/header.php"; // Navbar
             <p>Chưa có tài khoản? <a href="#" onclick="showRegister()">Đăng ký ngay</a></p>
         </div>
 
-        <!-- FORM REGISTER -->
         <div class="form-box hidden" id="register-form">
             <h2>📝 Đăng Ký</h2>
-            <!-- Lưu ý: onsubmit gọi hàm validateFormOnSubmit -->
             <form method="post" enctype="multipart/form-data" id="register-form-data" onsubmit="validateFormOnSubmit(event)" novalidate>
                 
-                <!-- [QUAN TRỌNG] Input hidden này giúp PHP nhận biết form đăng ký đã được gửi -->
                 <input type="hidden" name="register" value="1">
 
                 <div class="input-group">
@@ -381,6 +379,7 @@ include "includes/header.php"; // Navbar
 </div>
 
 <script>
+// ... Toàn bộ Javascript của bạn (không thay đổi) ...
 let emailCheckTimer;
 
 // Chuyển đổi giữa Login và Register
