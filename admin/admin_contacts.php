@@ -27,7 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
         if (function_exists('admin_log')) admin_log($_SESSION['user']['id'], 'read_contact', 'contacts', $contact_id);
+    } elseif ($action === 'mark_unread' && $contact_id) {
+        $stmt = $conn->prepare("UPDATE contacts SET is_read = 0 WHERE id = ?");
+        $stmt->bind_param("i", $contact_id);
+        $stmt->execute();
+        $stmt->close();
+        if (function_exists('admin_log')) admin_log($_SESSION['user']['id'], 'unread_contact', 'contacts', $contact_id);
     }
+
 
     header('Location: admin_contacts.php');
     exit;
@@ -124,9 +131,11 @@ $res = $stmt->get_result();
                         <input type="hidden" name="contact_id" value="<?= $r['id'] ?>">
 
                         <?php if ($r['is_read'] == 0): ?>
-                        <button type="submit" class="btn-warning" name="action" value="mark_read">Đã đọc</button>
+                            <button type="submit" class="btn-warning" name="action" value="mark_read">Đã đọc</button>
+                        <?php else: ?>
+                            <button type="submit" class="btn-neutral" name="action" value="mark_unread">Chưa đọc</button>
                         <?php endif; ?>
-                        
+
                         <button type="submit" class="btn-danger" name="action" value="delete" onclick="return confirm('Xóa vĩnh viễn tin nhắn này?')">Xóa</button>
                     </form>
                 </td>
