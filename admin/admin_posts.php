@@ -91,7 +91,32 @@ $stmt->execute();
 $res = $stmt->get_result();
 
 ?>
+<style>
+    /* Class cho nút Xem */
+    .btn-view {
+        /* Màu nền */
+        background-color: #3b82f6; /* Màu xanh dương sáng (Blue-500) */
+        color: #ffffff; /* Màu chữ trắng */
+        font-weight: 700;
+        text-decoration: none; /* Bỏ gạch chân */
+        padding: 8px 14px; /* Khoảng cách bên trong nút */
+        border-radius: 8px; /* Bo tròn góc */
+        display: inline-block; /* Để padding và margin hoạt động đúng */
+        margin-right: 12px;
+        transition: all 0.2s ease-in-out; /* Hiệu ứng chuyển động mượt mà */
+        border: none; /* Bỏ border mặc định của button nếu có */
+        cursor: pointer; /* Biến con trỏ thành bàn tay */
+        font-size: 14px; /* Kích thước chữ */
+        line-height: 1; /* Căn chỉnh chiều cao dòng */
+    }
 
+    /* Hiệu ứng khi di chuột vào (Hover) */
+    .btn-view:hover {
+        background-color: #1d4ed8; /* Màu xanh đậm hơn (Blue-700) */
+        transform: translateY(-1px); /* Nhích nhẹ lên 1px */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Thêm đổ bóng nhẹ */
+    }
+</style>
 <div class="header">
     <h1 style="margin:0">Quản lý Bài viết (<?= $total ?>)</h1>
     <form class="searchbar" method="get" style="margin:0;">
@@ -100,10 +125,6 @@ $res = $stmt->get_result();
         <button type="submit" class="btn-neutral" style="border-radius:10px; padding: 10px 14px; border:0; cursor:pointer;">Tìm</button>
     </form>
 </div>
-
-<a class="btn-neutral" href="admin_panel.php" style="margin-bottom: 18px; display: inline-block;">
-    ← Quay lại Dashboard
-</a>
 
 <section class="table-wrap">
     <table class="table">
@@ -130,9 +151,8 @@ $res = $stmt->get_result();
                     <td><?= htmlspecialchars($r['name']) ?></td>
                     <td style="color:var(--muted)"><?= htmlspecialchars($r['created_at']) ?></td>
                     <td>
-                        <a href="../forum_view.php?id=<?= urlencode($r['id']) ?>" target="_blank" 
-                           style="color: var(--text); text-decoration: underline; margin-right: 10px;">
-                           Xem
+                        <a href="../forum_view.php?id=<?= urlencode($r['id']) ?>" class="btn-view">
+                            Xem
                         </a>
 
                         <form method="post" style="display:inline">
@@ -143,7 +163,7 @@ $res = $stmt->get_result();
                                 <button class="btn-warning" name="action" value="feature">Nổi bật</button>
                             <?php endif; ?>
                             
-                            <button class="btn-danger" name="action" value="delete" onclick="return confirm('Xác nhận xoá bài viết này?')">Xoá</button>
+                            <button class="btn-danger" name="action" value="delete" onclick="return confirm('Xác nhận xoá bài viết này?')" >Xoá</button>
                         </form>
                     </td>
                 </tr>
@@ -176,7 +196,6 @@ $res = $stmt->get_result();
         <a href="?page=<?= $page+1 ?>&search=<?= urlencode($search) ?>">Tiếp »</a>
     <?php endif; ?>
 </div>
-
 
 <?php
 // Gọi Footer

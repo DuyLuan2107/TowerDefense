@@ -95,10 +95,6 @@ $res = $stmt->get_result();
   </form>
 </div>
 
-<a class="btn-neutral" href="admin_panel.php" style="margin-bottom: 18px; display: inline-block;">
-    ← Quay lại Dashboard
-</a>
-
 <section class="table-wrap">
   <table class="table">
     <thead>

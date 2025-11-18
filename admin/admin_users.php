@@ -4,7 +4,7 @@ require_once __DIR__ . '/../db/connect.php';
 require_once __DIR__ . '/../includes/admin_auth.php';
 require_admin();
 require_once __DIR__ . '/../includes/csrf.php';
-require_once __DIR__ . '/../includes/admin_log.php'; // optional, nếu bạn tạo admin_log
+require_once __DIR__ . '/../includes/admin_log.php'; 
 
 // Xử lý form hành động (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $uid = intval($_POST['user_id'] ?? 0);
 
-    if ($uid > 0 && $uid != $_SESSION['user']['id']) { // Thêm kiểm tra: Admin không thể tự thao tác chính mình
+    if ($uid > 0 && $uid != $_SESSION['user']['id']) { // Admin không thể tự thao tác chính mình
         if ($action === 'lock') {
             $stmt = $conn->prepare("UPDATE users SET is_locked = 1 WHERE id = ?");
             $stmt->bind_param("i", $uid); $stmt->execute(); $stmt->close();
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (function_exists('admin_log')) admin_log($_SESSION['user']['id'], 'delete_user', 'users', $uid);
         }
     }
-    // Thêm tham số tìm kiếm và trang vào URL khi chuyển hướng để giữ nguyên bộ lọc
+    
     $search = trim($_GET['q'] ?? '');
     $page = max(1, intval($_GET['p'] ?? 1));
     $query = http_build_query(['p' => $page, 'q' => $search]);
@@ -45,22 +45,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ======================== PAGE SETUP ========================
-// (Các file cần thiết đã được gọi ở trên)
-
-// Định nghĩa biến cho header
-$CURRENT_PAGE = 'users'; // Giúp tô sáng link "Người dùng"
+$CURRENT_PAGE = 'users';
 $PAGE_TITLE = 'Quản lý Người dùng';
-
-// Gọi Header (đã bao gồm auth, sidebar, CSS)
 require_once __DIR__ . '/admin_header.php';
 
-// ======================== PAGINATION + SEARCH (Logic lấy dữ liệu) ========================
+// ======================== PAGINATION + SEARCH ========================
 $search = trim($_GET['q'] ?? '');
 $page = max(1, intval($_GET['p'] ?? 1));
 $limit = 10;
 $offset = ($page - 1) * $limit;
 
-// Build query
+// Build query params
 $params = [];
 $sql_where = "";
 if ($search !== '') {
@@ -70,7 +65,7 @@ if ($search !== '') {
     $params[] = $like;
 }
 
-// Count total for pagination
+// Count total
 $count_sql = "SELECT COUNT(*) FROM users " . ($sql_where ? $sql_where : "");
 $count_stmt = $conn->prepare($count_sql);
 if ($sql_where) { $count_stmt->bind_param(str_repeat('s', count($params)), ...$params); }
@@ -81,14 +76,18 @@ $count_stmt->close();
 
 $total_pages = max(1, ceil($total_users / $limit));
 
-// Fetch rows
+// Fetch rows - ĐÃ SỬA ORDER BY
+// Ưu tiên role (admin 'a' < user 'u'), sau đó đến ID giảm dần (mới nhất lên trên)
 $select_sql = "
-  SELECT id, name, email, role, is_locked, COALESCE(last_login, last_activity) AS created_at, avatar
+  SELECT id, name, email, role, is_locked, created_at, 
+         COALESCE(last_login, last_activity) AS last_active_time, 
+         avatar
   FROM users
   " . ($sql_where ? $sql_where : "") . "
-  ORDER BY created_at DESC
+  ORDER BY role ASC, id DESC
   LIMIT ? OFFSET ?
 ";
+
 $select_stmt = $conn->prepare($select_sql);
 if ($sql_where) {
     $types = str_repeat('s', count($params)) . "ii";
@@ -100,7 +99,6 @@ if ($sql_where) {
 
 $select_stmt->execute();
 $result = $select_stmt->get_result();
-
 ?>
 
 <div class="header">
@@ -108,10 +106,11 @@ $result = $select_stmt->get_result();
   <div style="display:flex; gap:8px; align-items:center;">
     <form class="searchbar" method="get" action="admin_users.php" style="margin:0;">
         <?php if (isset($_GET['p'])) echo '<input type="hidden" name="p" value="'.htmlspecialchars($_GET['p']).'">' ?>
-        <input type="search" name="q" value="<?=htmlspecialchars($search)?>" placeholder="Tìm theo tên hoặc email...">
+        <input type="search" name="q" value="<?=htmlspecialchars($search)?>" 
+        style="width: 320px; padding: 10px; border-radius: 8px; border: 1px solid #ddd;" 
+        placeholder="Tìm theo tên hoặc email...">
         <button type="submit" class="btn-neutral" style="border-radius:10px; padding: 10px 14px; border:0; cursor:pointer;">Tìm</button>
     </form>
-    <a href="admin_panel.php" class="btn-neutral">Quay về Dashboard</a>
   </div>
 </div>
 
@@ -119,42 +118,67 @@ $result = $select_stmt->get_result();
     <table class="table" role="table" aria-label="Danh sách người dùng">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Người dùng</th>
+          <th width="50">ID</th>
+          <th>Tên người dùng</th>
           <th>Email</th>
-          <th>Role</th>
-          <th>Locked</th>
-          <th>Last Active</th> <th style="width:250px">Action</th>
+          <th width="80">Vai trò</th>
+          <th width="60">Locked</th>
+          <th>Tham gia</th> <!-- Cột mới thêm -->
+          <th>HĐ Cuối</th> <!-- Last Active -->
+          <th style="width:250px">Hành động</th>
         </tr>
       </thead>
       <tbody>
       <?php while ($r = $result->fetch_assoc()): ?>
         <tr>
-          <td><?=htmlspecialchars($r['id'])?></td>
+          <td><strong><?=htmlspecialchars($r['id'])?></strong></td>
           <td>
             <?php
                 $avatarPath = (!empty($r['avatar']) && file_exists("../" . $r['avatar']))
                     ? "../" . $r['avatar']
-                    : "../uploads/default.png";
+                    : "../uploads/avatar/default.png"; // Đảm bảo đường dẫn đúng
             ?>
-            <img style="width:42px; height:42px; border-radius:8px; object-fit:cover; margin-right:10px; vertical-align:middle;"
-                 src="<?= htmlspecialchars($avatarPath) ?>" alt="avatar">
+            <img style="width:36px; height:36px; border-radius:50%; object-fit:cover; margin-right:8px; vertical-align:middle; border:1px solid #eee;"
+                 src="<?= htmlspecialchars($avatarPath) ?>" alt="avt">
             
-            <div style="display:inline-block; vertical-align:middle;">
-              <strong><?=htmlspecialchars($r['name'])?></strong>
-              <div style="color:var(--muted); font-size:13px;">id <?=htmlspecialchars($r['id'])?></div>
-            </div>
+            <strong style="vertical-align:middle;"><?=htmlspecialchars($r['name'])?></strong>
           </td>
-          <td><div style="max-width:240px;word-break:break-word;"><?=htmlspecialchars($r['email'])?></div></td>
+          <td><div style="max-width:200px; overflow:hidden; text-overflow:ellipsis;"><?=htmlspecialchars($r['email'])?></div></td>
           <td>
             <?php if ($r['role'] === 'admin'): ?>
-              <span style="background:var(--accent-2); color:white; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 12px;">ADMIN</span>
+              <span style="background:#e0f2fe; color:#0284c7; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; text-transform:uppercase; border:1px solid #bae6fd;">ADMIN</span>
             <?php else: ?>
-              <span style="background:rgba(255,255,255,0.03); color:var(--muted); padding: 4px 8px; border-radius: 6px; font-size: 12px;">User</span>
+              <span style="background:#f3f4f6; color:#6b7280; padding: 4px 8px; border-radius: 6px; font-size: 11px; text-transform:uppercase; border:1px solid #e5e7eb;">User</span>
             <?php endif; ?>
           </td>
-          <td><?= $r['is_locked'] ? '<span style="color:var(--danger);font-weight:700">Yes</span>' : '<span style="color:var(--accent);font-weight:700">No</span>' ?></td>
-          <td style="color:var(--muted); font-size: 13px;"><?=htmlspecialchars($r['created_at'])?></td>
+          <td>
+            <?= $r['is_locked'] 
+                ? '<span style="color:#dc2626;font-weight:700;font-size:12px">Khoá</span>' 
+                : '<span style="color:#10b981;font-weight:700;font-size:12px">Mở</span>' ?>
+          </td>
+          
+          <!-- CỘT NGÀY THAM GIA -->
+          <td style="font-size: 13px; color:var(--text-main);">
+            <?= date('d/m/Y', strtotime($r['created_at'])) ?>
+            <div style="font-size:11px; color:var(--muted);"><?= date('H:i', strtotime($r['created_at'])) ?></div>
+          </td>
+
+          <!-- CỘT LAST ACTIVE -->
+          <td style="font-size: 13px; color:var(--muted);">
+             <?php 
+                if ($r['last_active_time']) {
+                    // Tính khoảng thời gian tương đối (VD: 5 phút trước)
+                    $diff = time() - strtotime($r['last_active_time']);
+                    if ($diff < 60) echo 'Vừa xong';
+                    elseif ($diff < 3600) echo floor($diff/60) . ' phút trước';
+                    elseif ($diff < 86400) echo floor($diff/3600) . ' giờ trước';
+                    else echo date('d/m/Y', strtotime($r['last_active_time']));
+                } else {
+                    echo 'Chưa rõ';
+                }
+             ?>
+          </td>
+
           <td>
             <form method="post" class="form-inline" style="display:flex; gap:6px; align-items:center;">
               <input type="hidden" name="csrf_token" value="<?=htmlspecialchars(csrf_token())?>">
@@ -164,18 +188,18 @@ $result = $select_stmt->get_result();
                 <?php if (!$r['is_locked']): ?>
                   <button class="btn-warning" name="action" value="lock" onclick="return confirm('Khoá tài khoản này?')">Khoá</button>
                 <?php else: ?>
-                  <button class="btn-neutral" name="action" value="unlock">Mở khoá</button>
+                  <button class="btn-neutral" name="action" value="unlock">Mở</button>
                 <?php endif; ?>
 
                 <?php if ($r['role'] !== 'admin'): ?>
-                  <button class="btn-neutral" name="action" value="make_admin">Lên Admin</button>
+                  <button class="btn-neutral" name="action" value="make_admin" title="Nâng quyền Admin">Nâng Admin</button>
                 <?php else: ?>
-                  <button class="btn-neutral" name="action" value="revoke_admin">Hạ Admin</button>
+                  <button class="btn-neutral" name="action" value="revoke_admin" title="Hạ quyền xuống User">Hạ Admin</button>
                 <?php endif; ?>
 
-                <button class="btn-danger" name="action" value="delete" onclick="return confirm('Xác nhận XOÁ VĨNH VIỄN người dùng này?')">Xoá</T>
+                <button class="btn-danger" name="action" value="delete" onclick="return confirm('CẢNH BÁO: Hành động này không thể hoàn tác!\nXác nhận XOÁ VĨNH VIỄN user này?')">Xoá</button>
               <?php else: ?>
-                <span style="color:var(--muted); font-size: 12px;">(Đây là bạn)</span>
+                <span style="color:var(--muted); font-size: 12px; font-style:italic;">(Tài khoản hiện tại)</span>
               <?php endif; ?>
             </form>
           </td>
@@ -186,18 +210,17 @@ $result = $select_stmt->get_result();
 </section>
 
 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px;">
-  <div style="color:var(--muted); font-size:13px;">Tổng: <?=htmlspecialchars($total_users)?> users</div>
+  <div style="color:var(--muted); font-size:13px;">Tổng: <strong><?=htmlspecialchars($total_users)?></strong> thành viên</div>
   
   <div class="pagination" role="navigation" aria-label="Pagination">
       <?php
-      $q = $search ? '&q='.urlencode($search) : ''; // Param là 'q'
+      $q = $search ? '&q='.urlencode($search) : ''; 
       
       if ($page > 1){
           $prev = $page - 1;
           echo '<a href="admin_users.php?p='.$prev.$q.'">« Trước</a>';
       }
 
-      // Hiển thị một vài trang xung quanh trang hiện tại
       $start = max(1, $page - 2);
       $end = min($total_pages, $page + 2);
 
@@ -227,12 +250,8 @@ $result = $select_stmt->get_result();
   </div>
 </div>
 
-
 <?php
-// Đóng kết nối TRƯỚC khi gọi footer
 $select_stmt->close();
 $conn->close();
-
-// Gọi Footer
 require_once __DIR__ . '/admin_footer.php';
 ?>
