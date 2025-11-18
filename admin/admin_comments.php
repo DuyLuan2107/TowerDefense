@@ -22,12 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
         admin_log($_SESSION['user']['id'], 'delete_comment', 'comments', $cid);
 
-    } elseif ($action === 'hide' && $cid) {
-        $stmt = $conn->prepare("UPDATE comments SET content = '[deleted by admin]' WHERE id = ?");
-        $stmt->bind_param("i", $cid);
-        $stmt->execute();
-        $stmt->close();
-        admin_log($_SESSION['user']['id'], 'hide_comment', 'comments', $cid);
     }
 
     // Chuyển hướng về chính trang này để làm mới
@@ -146,8 +140,6 @@ $res = $stmt->get_result();
                         <form method="post" style="display:inline">
                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                             <input type="hidden" name="comment_id" value="<?= $r['id'] ?>">
-
-                            <button class="btn-warning" name="action" value="hide" onclick="return confirm('Bạn có chắc muốn ẨN bình luận này? (Nội dung sẽ bị thay thế)')">Ẩn</button>
                             <button class="btn-danger" name="action" value="delete" onclick="return confirm('Bạn có chắc muốn XÓA VĨNH VIỄN bình luận này?')">Xóa</button>
                         </form>
                     </td>
