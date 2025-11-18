@@ -1,49 +1,68 @@
 <?php
-// admin/admin_scores.php
+// =========================== 1. LOGIC & PROCESS (PHẢI Ở TRÊN CÙNG) ===========================
 require_once __DIR__ . '/../db/connect.php';
 require_once __DIR__ . '/../includes/admin_auth.php';
 require_admin();
 require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/admin_log.php';
 
-/* ===========================
-   EXPORT CSV
-   =========================== */
+/* --- EXPORT CSV --- */
 if (isset($_GET['export']) && $_GET['export']=='csv') {
+    // Xử lý export ngay lập tức trước khi có bất kỳ output nào
     header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename=scores.csv');
+    header('Content-Disposition: attachment; filename=scores_export_'.date('Ymd_Hi').'.csv');
     $out = fopen('php://output', 'w');
-    fputcsv($out, ['id','user_id','user_name','score','enemies_killed','gold_left','duration_seconds','created_at']);
+    
+    // Add BOM for Excel utf-8 compatibility
+    fputs($out, "\xEF\xBB\xBF"); 
+    
+    fputcsv($out, ['ID', 'User ID', 'User Name', 'Score', 'Enemies Killed', 'Gold Left', 'Duration (s)', 'Created At']);
+    
+    // Lấy dữ liệu (không phân trang)
     $res = $conn->query("SELECT s.*, u.name AS user_name FROM scores s LEFT JOIN users u ON u.id = s.user_id ORDER BY s.created_at DESC");
     while ($row = $res->fetch_assoc()) {
-        fputcsv($out, [$row['id'],$row['user_id'],$row['user_name'],$row['score'],$row['enemies_killed'],$row['gold_left'],$row['duration_seconds'],$row['created_at']]);
+        fputcsv($out, [
+            $row['id'],
+            $row['user_id'],
+            $row['user_name'],
+            $row['score'],
+            $row['enemies_killed'],
+            $row['gold_left'],
+            $row['duration_seconds'],
+            $row['created_at']
+        ]);
     }
     fclose($out);
     exit;
 }
 
-/* ===========================
-   DELETE
-   =========================== */
+/* --- DELETE --- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_validate($_POST['csrf_token'] ?? '')) die('Invalid CSRF');
     $action = $_POST['action'] ?? '';
     $sid = intval($_POST['score_id'] ?? 0);
+    
     if ($action === 'delete' && $sid) {
         $stmt = $conn->prepare("DELETE FROM scores WHERE id = ?");
         $stmt->bind_param("i", $sid);
         $stmt->execute();
         $stmt->close();
-        admin_log($_SESSION['user']['id'], 'delete_score', 'scores', $sid);
+        if (function_exists('admin_log')) admin_log($_SESSION['user']['id'], 'delete_score', 'scores', $sid);
     }
-    header('Location: admin_scores.php');
+    // Redirect để tránh resubmit form
+    $search = trim($_GET['search'] ?? '');
+    $page = max(1, intval($_GET['page'] ?? 1));
+    $query = http_build_query(['page' => $page, 'search' => $search]);
+    header("Location: admin_scores.php?$query");
     exit;
 }
 
-/* ===========================
-   SEARCH + PAGINATION
-   =========================== */
+/* --- PAGE SETUP --- */
+$CURRENT_PAGE = 'scores';
+$PAGE_TITLE = 'Quản lý Điểm số';
+require_once __DIR__ . '/admin_header.php'; // Gọi giao diện Admin
 
+/* --- SEARCH + PAGINATION --- */
 $search = trim($_GET['search'] ?? '');
 $page   = max(1, intval($_GET['page'] ?? 1));
 $limit  = 20;
@@ -60,13 +79,7 @@ if ($search !== "") {
 }
 
 /* COUNT */
-$count_sql = "
-  SELECT COUNT(*) AS total
-  FROM scores s 
-  LEFT JOIN users u ON u.id = s.user_id
-  $where_sql
-";
-
+$count_sql = "SELECT COUNT(*) AS total FROM scores s LEFT JOIN users u ON u.id = s.user_id $where_sql";
 $stmt = $conn->prepare($count_sql);
 if ($where_sql) $stmt->bind_param($types, ...$params);
 $stmt->execute();
@@ -85,9 +98,7 @@ $sql = "
   ORDER BY s.created_at DESC
   LIMIT ?, ?
 ";
-
 $stmt = $conn->prepare($sql);
-
 if ($where_sql) {
     $types2 = $types . "ii";
     $bind = [...$params, $offset, $limit];
@@ -95,119 +106,121 @@ if ($where_sql) {
 } else {
     $stmt->bind_param("ii", $offset, $limit);
 }
-
 $stmt->execute();
 $res = $stmt->get_result();
 $stmt->close();
 ?>
-<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<title>Quản lý Scores</title>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- BẮT ĐẦU NỘI DUNG TRANG -->
 
-<style>
-body {
-    background: #f3f4f6;
-}
-.card {
-    border-radius: 14px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-}
-table th {
-    background: #1f2937;
-    color: white;
-}
-</style>
-</head>
-
-<body class="p-4">
-
-<div class="container">
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="fw-bold">📊 Quản lý Scores</h2>
-        <a href="admin_panel.php" class="btn btn-secondary">⬅ Back Dashboard</a>
+<div class="header">
+    <h1 style="margin:0">Quản lý Scores (<?= $total ?>)</h1>
+    
+    <div style="display:flex; gap:10px; align-items:center;">
+        <!-- Form tìm kiếm -->
+        <form class="searchbar" method="get" style="margin:0;">
+            <input type="search" name="search" 
+                   value="<?=htmlspecialchars($search)?>" 
+                   placeholder="Tìm ID hoặc Tên user...">
+            <button type="submit" class="btn-neutral" style="border-radius:10px; padding: 10px 14px; border:0; cursor:pointer;">Tìm</button>
+        </form>
+        
+        <!-- Nút Export CSV -->
+        <a href="admin_scores.php?export=csv" class="btn-neutral" style="text-decoration:none; font-weight:600; display:flex; align-items:center; gap:5px;">
+            <span>⬇ CSV</span>
+        </a>
     </div>
-
-    <!-- SEARCH FORM -->
-    <form method="get" class="mb-3 d-flex gap-2">
-        <input 
-            type="text" 
-            name="search" 
-            class="form-control"
-            placeholder="Tìm theo User ID hoặc Tên user..."
-            value="<?=htmlspecialchars($search)?>"
-        >
-        <button class="btn btn-primary">Tìm</button>
-        <a href="admin_scores.php" class="btn btn-outline-secondary">Reset</a>
-    </form>
-
-    <!-- EXPORT -->
-    <a href="admin_scores.php?export=csv" class="btn btn-success mb-3">⬇ Export CSV</a>
-
-    <!-- CARD TABLE -->
-    <div class="card p-3">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>User</th>
-                        <th>Score</th>
-                        <th>Enemies</th>
-                        <th>Gold</th>
-                        <th>Time(s)</th>
-                        <th>Created</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-
-                <?php while ($r = $res->fetch_assoc()): ?>
-                <tr>
-                    <td><?=htmlspecialchars($r['id'])?></td>
-                    <td><?=htmlspecialchars($r['user_name'])?> (<?=htmlspecialchars($r['user_id'])?>)</td>
-                    <td><?=htmlspecialchars($r['score'])?></td>
-                    <td><?=htmlspecialchars($r['enemies_killed'])?></td>
-                    <td><?=htmlspecialchars($r['gold_left'])?></td>
-                    <td><?=htmlspecialchars($r['duration_seconds'])?></td>
-                    <td><?=htmlspecialchars($r['created_at'])?></td>
-                    <td>
-                        <form method="post" onsubmit="return confirm('Xóa điểm này?')" class="d-inline">
-                            <input type="hidden" name="csrf_token" value="<?=htmlspecialchars(csrf_token())?>">
-                            <input type="hidden" name="score_id" value="<?=htmlspecialchars($r['id'])?>">
-                            <button name="action" value="delete" class="btn btn-sm btn-danger">
-                                Xóa
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- PAGINATION -->
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center">
-
-            <?php for ($i = 1; $i <= $pages; $i++): ?>
-            <li class="page-item <?=($i == $page ? 'active' : '')?>">
-                <a class="page-link" href="?page=<?=$i?>&search=<?=urlencode($search)?>">
-                    <?=$i?>
-                </a>
-            </li>
-            <?php endfor; ?>
-
-        </ul>
-    </nav>
-
 </div>
 
-</body>
-</html>
+<!-- Table Wrap -->
+<section class="table-wrap">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Score</th>
+                <th>Enemies</th>
+                <th>Gold</th>
+                <th>Time(s)</th>
+                <th>Created</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php if ($res->num_rows > 0): ?>
+            <?php while ($r = $res->fetch_assoc()): ?>
+            <tr>
+                <td><?=htmlspecialchars($r['id'])?></td>
+                <td>
+                    <strong><?=htmlspecialchars($r['user_name'])?></strong>
+                    <div style="color:var(--muted); font-size:12px;">ID: <?=htmlspecialchars($r['user_id'])?></div>
+                </td>
+                <td style="font-weight:bold; color:var(--accent);"><?=number_format($r['score'])?></td>
+                <td><?=number_format($r['enemies_killed'])?></td>
+                <td><?=number_format($r['gold_left'])?></td>
+                <td><?=gmdate("H:i:s", $r['duration_seconds'])?></td>
+                <td style="color:var(--muted); font-size:13px;"><?=htmlspecialchars($r['created_at'])?></td>
+                <td>
+                    <form method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="<?=htmlspecialchars(csrf_token())?>">
+                        <input type="hidden" name="score_id" value="<?=htmlspecialchars($r['id'])?>">
+                        
+                        <button class="btn-danger" name="action" value="delete" 
+                                onclick="return confirm('Xác nhận xóa lượt chơi này?')"
+                                style="padding: 6px 10px; font-size: 12px;">
+                            Xóa
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="8" style="text-align:center; padding: 20px; color:var(--muted);">
+                    Không tìm thấy dữ liệu nào.
+                </td>
+            </tr>
+        <?php endif; ?>
+        </tbody>
+    </table>
+</section>
+
+<!-- Pagination -->
+<div class="pagination">
+    <?php 
+    $q = $search ? '&search='.urlencode($search) : ''; 
+    
+    if ($page > 1): ?>
+        <a href="?page=<?=$page-1?><?=$q?>">« Trước</a>
+    <?php endif; ?>
+
+    <?php 
+    // Hiển thị rút gọn nếu quá nhiều trang
+    $start = max(1, $page - 2);
+    $end = min($pages, $page + 2);
+    
+    if ($start > 1) echo '<a href="?page=1'.$q.'">1</a><span>...</span>';
+
+    for ($i = $start; $i <= $end; $i++): 
+        if ($i == $page): ?>
+            <span class="current"><?=$i?></span>
+        <?php else: ?>
+            <a href="?page=<?=$i?><?=$q?>"><?=$i?></a>
+        <?php endif; 
+    endfor; 
+    
+    if ($end < $pages) echo '<span>...</span><a href="?page='.$pages.$q.'">'.$pages.'</a>';
+    ?>
+
+    <?php if ($page < $pages): ?>
+        <a href="?page=<?=$page+1?><?=$q?>">Tiếp »</a>
+    <?php endif; ?>
+</div>
+
+<!-- KẾT THÚC NỘI DUNG TRANG -->
+
+<?php
+// Gọi Footer
+require_once __DIR__ . '/admin_footer.php';
+?>
