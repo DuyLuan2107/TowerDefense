@@ -5,6 +5,19 @@ include 'includes/header.php';
 
 $message_sent = false; // Cờ hiệu
 
+// --- 1. LOGIC TỰ ĐỘNG ĐIỀN (PRE-FILL) ---
+$default_name = "";
+$default_email = "";
+
+// Kiểm tra nếu người dùng đã đăng nhập
+if (isset($_SESSION['user'])) {
+    // Lấy thông tin từ Session (Giả sử session lưu key là 'name' và 'email')
+    // Dùng htmlspecialchars để an toàn khi output ra HTML
+    $default_name = $_SESSION['user']['name'] ?? ''; 
+    $default_email = $_SESSION['user']['email'] ?? '';
+}
+// ---------------------------------------
+
 // Xử lý khi người dùng gửi form
 if (isset($_POST['send'])) {
     $name = trim($_POST['name'] ?? '');
@@ -35,13 +48,19 @@ if (isset($_POST['send'])) {
         
         <form method="post" class="contact-form">
             <div class="form-group">
-                <label for="name">👤 Họ và tên:</label>
-                <input type="text" id="name" name="name" placeholder="Nhập họ và tên..." required>
+                <label for="name">👤 Họ và tên (Tên Ingame):</label>
+                <input type="text" id="name" name="name" 
+                       placeholder="Nhập họ và tên..." 
+                       value="<?= htmlspecialchars($default_name) ?>" 
+                       required>
             </div>
 
             <div class="form-group">
                 <label for="email">📧 Email:</label>
-                <input type="email" id="email" name="email" placeholder="Nhập địa chỉ email..." required>
+                <input type="email" id="email" name="email" 
+                       placeholder="Nhập địa chỉ email..." 
+                       value="<?= htmlspecialchars($default_email) ?>" 
+                       required>
             </div>
 
             <div class="form-group">
