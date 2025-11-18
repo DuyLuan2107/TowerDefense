@@ -10,6 +10,32 @@ if (isset($_SESSION['user'])) {
     $uid = (int)$_SESSION['user']['id'];
     $conn->query("UPDATE users SET last_activity = NOW() WHERE id = $uid");
 }
+
+/* ===== Kiểm tra tài khoản bị khóa ===== */
+if (isset($_SESSION['user'])) {
+    $uid = (int)$_SESSION['user']['id'];
+
+    $stmt = $conn->prepare("SELECT is_locked FROM users WHERE id = ?");
+    $stmt->bind_param("i", $uid);
+    $stmt->execute();
+    $stmt->bind_result($locked);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($locked == 1) {
+        // Xóa session
+        session_unset();
+        session_destroy();
+
+        // Xóa cookie remember_token
+        setcookie('remember_token', '', time() - 3600, "/");
+
+        // Chuyển về trang đăng nhập
+        header("Location: auth.php?locked=1");
+        exit;
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="vi">
