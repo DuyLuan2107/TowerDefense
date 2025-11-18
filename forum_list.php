@@ -152,7 +152,7 @@ $result = $stmt->get_result();
 <?php while ($row = $result->fetch_assoc()): ?>
   <div class="forum-card" data-href="forum_view.php?id=<?= $row['id'] ?>" onclick="goToPost(event, this)">
     <div class="forum-icon">
-    <img src="<?= $row['avatar'] ?: 'uploads/default.png' ?>" 
+    <img src="<?= $row['avatar'] ?: 'uploads/avatar/default.png' ?>" 
      alt="avatar" class="avatar-img">
 
 </div>
