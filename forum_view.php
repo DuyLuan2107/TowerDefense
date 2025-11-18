@@ -2,7 +2,6 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'db/connect.php';
 
-
 function formatDateVN($datetime) {
     $date = new DateTime($datetime);
     $monthNames = [
@@ -12,6 +11,13 @@ function formatDateVN($datetime) {
     ];
     return $date->format('d') . ' ' . $monthNames[(int)$date->format('m')] . ' ' . $date->format('Y');
 }
+
+// --- KIỂM TRA QUYỀN ADMIN ---
+$isAdmin = false;
+if (isset($_SESSION['user']) && isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin') {
+    $isAdmin = true;
+}
+// -----------------------------
 
 $post_id = (int)($_GET['id'] ?? 0);
 if ($post_id <= 0) {
@@ -43,7 +49,7 @@ if (isset($_SESSION['user'])) {
     $userLiked = $chk->num_rows > 0;
 }
 
-// Bình luận
+// Bình luận - Xử lý POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
   if (!isset($_SESSION['user'])) {
     echo "<script>alert('Bạn cần đăng nhập để bình luận.');</script>";
@@ -83,10 +89,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
   }
 }
 include 'includes/header.php';
-// Lấy bình luận
+// Lấy danh sách bình luận
 $sqlC = "SELECT c.*, u.name AS author, u.avatar AS author_avatar 
-         FROM comments c JOIN users u ON u.id = c.user_id 
-         WHERE c.post_id = ? ORDER BY c.created_at ASC";
+          FROM comments c JOIN users u ON u.id = c.user_id 
+          WHERE c.post_id = ? ORDER BY c.created_at ASC";
 $stmtC2 = $conn->prepare($sqlC);
 $stmtC2->bind_param("i", $post_id);
 $stmtC2->execute();
@@ -103,7 +109,7 @@ $comments = $stmtC2->get_result();
     <div class="fb-post">
         <div class="fb-post-header">
             <a href="user_profile.php?id=<?= $post['user_id'] ?>">
-                <img class="avatar" src="<?= htmlspecialchars($post['author_avatar'] ?? 'uploads/default.png') ?>" alt="Avatar">
+                <img class="avatar" src="<?= htmlspecialchars($post['author_avatar'] ?? 'uploads/avatar/default.png') ?>" alt="Avatar">
             </a>
 
             <div class="info">
@@ -145,9 +151,21 @@ $comments = $stmtC2->get_result();
         <div class="fb-post-actions">
             <button id="likeBtn"><?= $userLiked ? "❤️" : "🤍" ?> <span id="likeCount"><?= $totalLikes ?></span></button>
             <button id="shareBtn">Chia sẻ</button>
-            <?php if (isset($_SESSION['user']) && $_SESSION['user']['id'] == $post['user_id']): ?>
-                <a href="forum_edit_post.php?id=<?= $post_id ?>">Sửa</a>
-                <a href="forum_delete_post.php?id=<?= $post_id ?>" onclick="return confirm('Xoá bài này?');">Xoá</a>
+            
+            <?php if (isset($_SESSION['user'])): ?>
+                <?php 
+                    $isAuthor = $_SESSION['user']['id'] == $post['user_id'];
+                ?>
+                
+                <!-- Chỉ tác giả mới được Sửa -->
+                <?php if ($isAuthor): ?>
+                    <a href="forum_edit_post.php?id=<?= $post_id ?>">Sửa</a>
+                <?php endif; ?>
+
+                <!-- Tác giả HOẶC Admin được Xoá -->
+                <?php if ($isAuthor || $isAdmin): ?>
+                    <a href="forum_delete_post.php?id=<?= $post_id ?>" onclick="return confirm('Xoá bài này?');" style="<?= $isAdmin && !$isAuthor ? 'color: red;' : '' ?>">Xoá</a>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
 
@@ -160,7 +178,7 @@ $comments = $stmtC2->get_result();
             <?php while ($c = $comments->fetch_assoc()): ?>
                 <div class="fb-comment">
                     <a href="user_profile.php?id=<?= $c['user_id'] ?>">
-                        <img class="avatar" src="<?= $c['author_avatar'] ?: 'uploads/default.png' ?>" alt="Avatar">
+                        <img class="avatar" src="<?= $c['author_avatar'] ?: 'uploads/avatar/default.png' ?>" alt="Avatar">
                     </a>
 
                     <div class="content">
@@ -179,10 +197,21 @@ $comments = $stmtC2->get_result();
                         if (!empty($img['image_path'])): ?>
                             <img src="<?= $img['image_path'] ?>" style="max-width:100%; margin-top:5px; border-radius:8px;">
                         <?php endif; ?>
-                        <?php if (isset($_SESSION['user']) && $_SESSION['user']['id'] == $c['user_id']): ?>
+
+                        <?php if (isset($_SESSION['user'])): ?>
+                            <?php 
+                                $isCommentAuthor = $_SESSION['user']['id'] == $c['user_id'];
+                            ?>
                             <div style="margin-top:5px;">
-                                <a href="comment_edit.php?id=<?= $c['id'] ?>&post=<?= $post_id ?>" style="font-size:0.8em; color:#1877f2; margin-right:10px;">Sửa</a>
-                                <a href="comment_delete.php?id=<?= $c['id'] ?>&post=<?= $post_id ?>" onclick="return confirm('Xoá bình luận này?');" style="font-size:0.8em; color:#d9534f;">Xoá</a>
+                                <!-- Chỉ chủ bình luận mới được sửa -->
+                                <?php if ($isCommentAuthor): ?>
+                                    <a href="comment_edit.php?id=<?= $c['id'] ?>&post=<?= $post_id ?>" style="font-size:0.8em; color:#1877f2; margin-right:10px;">Sửa</a>
+                                <?php endif; ?>
+                                
+                                <!-- Chủ bình luận HOẶC Admin được xoá -->
+                                <?php if ($isCommentAuthor || $isAdmin): ?>
+                                    <a href="comment_delete.php?id=<?= $c['id'] ?>&post=<?= $post_id ?>" onclick="return confirm('Xoá bình luận này?');" style="font-size:0.8em; color:#d9534f;">Xoá</a>
+                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
                     </div>
