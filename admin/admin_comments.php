@@ -114,10 +114,6 @@ $res = $stmt->get_result();
     </form>
 </div>
 
-<a class="btn-neutral" href="admin_panel.php" style="margin-bottom: 18px; display: inline-block;">
-    ← Quay lại Dashboard
-</a>
-
 <section class="table-wrap">
     <table class="table">
         <thead>
@@ -137,7 +133,7 @@ $res = $stmt->get_result();
                     <td><?= $r['id'] ?></td>
                     <td><?= htmlspecialchars($r['user_name']) ?> (ID <?= $r['user_id'] ?>)</td>
                     <td>
-                        <a href="../forum_view.php?id=<?= $r['post_id'] ?>" target="_blank" 
+                        <a href="../forum_view.php?id=<?= $r['post_id'] ?>"
                            style="color: var(--text); text-decoration: underline;">
                             <?= htmlspecialchars($r['post_title']) ?>
                         </a>
