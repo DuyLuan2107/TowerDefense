@@ -1,11 +1,12 @@
 /* Google Fonts - Inter */
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap');
 
-* {
+/* * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
+*/
 #chatbot-toggler {
     position: fixed;
     bottom: 30px;
@@ -44,8 +45,9 @@ body.show-chatbot #chatbot-toggler span:last-child {
 .chatbot-popup {
     position: fixed;
     right: 35px;
-    bottom: 90px;
+    bottom: 88px;
     width: 420px;
+    height: 620px;
     overflow: hidden;
     background: #fff;
     border-radius: 15px;
@@ -129,7 +131,11 @@ body.show-chatbot .chatbot-popup {
 .chat-form .message-input:hover {
     scrollbar-color: #F0FFFF transparent;
 }
-
+/* Thêm đoạn này vào CSS của bạn */
+.chatbot-popup, 
+.chatbot-popup * {
+    box-sizing: border-box;
+}
 .chat-body .message {
     display: flex;
     gap: 11px;
