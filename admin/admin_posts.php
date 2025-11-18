@@ -20,11 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // admin_log($_SESSION['user']['id'], 'delete_post', 'posts', $pid);
 
     } elseif ($action === 'feature' && $pid) {
+        // Hành động: GHIM
         $stmt = $conn->prepare("UPDATE posts SET featured = 1 WHERE id = ?");
         $stmt->bind_param("i", $pid);
         $stmt->execute();
         $stmt->close();
-        // admin_log($_SESSION['user']['id'], 'feature_post', 'posts', $pid);
+        // admin_log($_SESSION['user']['id'], 'pin_post', 'posts', $pid);
+
+    } elseif ($action === 'unfeature' && $pid) {
+        // Hành động: BỎ GHIM
+        $stmt = $conn->prepare("UPDATE posts SET featured = 0 WHERE id = ?");
+        $stmt->bind_param("i", $pid);
+        $stmt->execute();
+        $stmt->close();
+        // admin_log($_SESSION['user']['id'], 'unpin_post', 'posts', $pid);
     }
 
     header("Location: admin_posts.php");
@@ -51,13 +60,13 @@ $offset = ($page - 1) * $limit;
 $search = trim($_GET['search'] ?? '');
 
 $whereSql = "";
-$params = []; // Sửa: Khởi tạo mảng rỗng
+$params = []; 
 $types = "";
 
 if ($search !== "") {
     $whereSql = "WHERE p.title LIKE ? OR u.name LIKE ?";
     $like = "%$search%";
-    $params = [$like, $like]; // Sửa: Gán mảng
+    $params = [$like, $like];
     $types = "ss";
 }
 
@@ -68,7 +77,7 @@ $sqlCount = "SELECT COUNT(*)
              LEFT JOIN users u ON u.id = p.user_id 
              $whereSql";
 $stmt = $conn->prepare($sqlCount);
-if ($whereSql !== "") $stmt->bind_param($types, ...$params); // Sửa: Dùng ...$params
+if ($whereSql !== "") $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $stmt->bind_result($total);
 $stmt->fetch();
@@ -77,46 +86,21 @@ $totalPages = max(1, ceil($total / $limit));
 
 
 // ====== Fetch posts ======
-// (Chúng ta nên lấy thêm p.featured để biết khi nào cần ẩn nút "Nổi bật")
 $sql = "SELECT p.id, p.title, p.user_id, p.created_at, p.featured, u.name 
         FROM posts p 
         LEFT JOIN users u ON u.id = p.user_id
         $whereSql
-        ORDER BY p.created_at DESC
-        LIMIT $limit OFFSET $offset";
+        ORDER BY p.featured DESC, p.created_at DESC 
+        LIMIT $limit OFFSET $offset"; 
+        // Lưu ý: Thêm ORDER BY p.featured DESC để bài ghim lên đầu
 
 $stmt = $conn->prepare($sql);
-if ($whereSql !== "") $stmt->bind_param($types, ...$params); // Sửa: Dùng ...$params
+if ($whereSql !== "") $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $res = $stmt->get_result();
 
 ?>
-<style>
-    /* Class cho nút Xem */
-    .btn-view {
-        /* Màu nền */
-        background-color: #3b82f6; /* Màu xanh dương sáng (Blue-500) */
-        color: #ffffff; /* Màu chữ trắng */
-        font-weight: 700;
-        text-decoration: none; /* Bỏ gạch chân */
-        padding: 8px 14px; /* Khoảng cách bên trong nút */
-        border-radius: 8px; /* Bo tròn góc */
-        display: inline-block; /* Để padding và margin hoạt động đúng */
-        margin-right: 12px;
-        transition: all 0.2s ease-in-out; /* Hiệu ứng chuyển động mượt mà */
-        border: none; /* Bỏ border mặc định của button nếu có */
-        cursor: pointer; /* Biến con trỏ thành bàn tay */
-        font-size: 14px; /* Kích thước chữ */
-        line-height: 1; /* Căn chỉnh chiều cao dòng */
-    }
 
-    /* Hiệu ứng khi di chuột vào (Hover) */
-    .btn-view:hover {
-        background-color: #1d4ed8; /* Màu xanh đậm hơn (Blue-700) */
-        transform: translateY(-1px); /* Nhích nhẹ lên 1px */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Thêm đổ bóng nhẹ */
-    }
-</style>
 <div class="header">
     <h1 style="margin:0">Quản lý Bài viết (<?= $total ?>)</h1>
     <form class="searchbar" method="get" style="margin:0;">
@@ -140,27 +124,32 @@ $res = $stmt->get_result();
         <tbody>
             <?php if ($res->num_rows > 0): ?>
                 <?php while ($r = $res->fetch_assoc()): ?>
-                <tr <?php if ($r['featured'] == 1) echo 'style="background: rgba(245, 158, 11, 0.1);"'; // Tô sáng hàng "nổi bật" ?> >
+                <tr <?php if ($r['featured'] == 1) echo 'style="background: rgba(245, 158, 11, 0.1);"'; // Tô sáng hàng "ghim" ?> >
                     <td><?= htmlspecialchars($r['id']) ?></td>
                     <td>
                         <?php if ($r['featured'] == 1): ?>
-                            <span style="color: var(--warning); font-weight: 700;">★ </span>
+                            <span style="color: var(--warning); font-weight: 700;" title="Đã ghim">📌 </span>
                         <?php endif; ?>
                         <?= htmlspecialchars($r['title']) ?>
                     </td>
                     <td><?= htmlspecialchars($r['name']) ?></td>
                     <td style="color:var(--muted)"><?= htmlspecialchars($r['created_at']) ?></td>
                     <td>
-                        <a href="../forum_view.php?id=<?= urlencode($r['id']) ?>" class="btn-view">
-                            Xem
-                        </a>
+                        
 
                         <form method="post" style="display:inline">
                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                             <input type="hidden" name="post_id" value="<?= htmlspecialchars($r['id']) ?>">
+                            <a class="btn-neutral" name="action" href="../forum_view.php?id=<?= urlencode($r['id']) ?>">
+                                XEM
+                            </a>
 
                             <?php if ($r['featured'] == 0): ?>
-                                <button class="btn-warning" name="action" value="feature">Nổi bật</button>
+                                <!-- Chưa ghim -> Hiện nút Ghim -->
+                                <button class="btn-warning" name="action" value="feature" title="Ghim lên đầu trang">GHIM</button>
+                            <?php else: ?>
+                                <!-- Đã ghim -> Hiện nút Bỏ ghim -->
+                                <button class="btn-neutral" name="action" value="unfeature" title="Bỏ ghim">BỎ GHIM</button>
                             <?php endif; ?>
                             
                             <button class="btn-danger" name="action" value="delete" onclick="return confirm('Xác nhận xoá bài viết này?')" >Xoá</button>
