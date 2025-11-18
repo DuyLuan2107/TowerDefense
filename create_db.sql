@@ -1,7 +1,6 @@
 CREATE DATABASE tower_defense;
 USE tower_defense;
 
--- TABLES
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100),
@@ -9,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   password VARCHAR(255),
   avatar VARCHAR(255) DEFAULT 'uploads/avatar/default.png',
   secret_code VARCHAR(255) NOT NULL,
+  bio VARCHAR(255) NULL DEFAULT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   last_activity DATETIME NULL,
   role VARCHAR(20) NOT NULL DEFAULT 'user',
   last_login DATETIME NULL,
@@ -32,6 +33,7 @@ CREATE TABLE IF NOT EXISTS posts (
   title VARCHAR(200) NOT NULL,
   content TEXT,
   screenshot_url VARCHAR(255),
+  featured TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -84,61 +86,78 @@ CREATE TABLE IF NOT EXISTS admin_logs (
   FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- SAMPLE USERS (20)
-INSERT INTO users (name, email, password, secret_code, avatar, role) VALUES
-('Duy Luân', 'luan@gmail.com.com', '$2y$10$abcdefghijk1234567890luan', 'sc_1a2b3c4d5e', 'uploads/avatar/1.jpg', 'admin'),
-('Trọng Hoài', 'hoai@gmail.com.com', '$2y$10$abcdefghijk1234567890hoai', 'sc_2b3c4d5e6f',  'uploads/avatar/2.jpg', 'user'),
-('Minh Trí', 'tri@gmail.com.com', '$2y$10$abcdefghijk1234567890tri', 'sc_3c4d5e6f7g',  'uploads/avatar/3.jpg', 'user'),
-('Anh Khoa', 'khoa@gmail.com.com', '$2y$10$abcdefghijk1234567890khoa', 'sc_4d5e6f7g8h',  'uploads/avatar/4.jpg', 'user'),
-('Vĩnh Thuận', 'thuan@gmail.com.com', '$2y$10$abcdefghijk1234567890thuan', 'sc_5e6f7g8h9i',  'uploads/avatar/5.jpg', 'user'),
-('Hải Đăng', 'dang@gmail.com.com', '$2y$10$abcdefghijk1234567890dang', 'sc_6f7g8h9i0j',  'uploads/avatar/6.jpg', 'user'),
-('Bảo Nam', 'nam@gmail.com.com', '$2y$10$abcdefghijk1234567890nam', 'sc_7g8h9i0j1k',  'uploads/avatar/7.jpg', 'user'),
-('Hữu Lộc', 'loc@gmail.com.com', '$2y$10$abcdefghijk1234567890loc', 'sc_8h9i0j1k2l',  'uploads/avatar/8.jpg', 'user'),
-('Thanh Phong', 'phong@gmail.com.com', '$2y$10$abcdefghijk1234567890phong', 'sc_9i0j1k2l3m',  'uploads/avatar/9.jpg', 'user'),
-('Hồng Nhung', 'nhung@gmail.com.com', '$2y$10$abcdefghijk1234567890nhung', 'sc_0j1k2l3m4n',  'uploads/avatar/10.jpg', 'user'),
-('Quang Minh', 'minh@gmail.com.com', '$2y$10$abcdefghijk1234567890minh', 'sc_a1b2c3d4e5',  'uploads/avatar/11.jpg', 'user'),
-('Ngọc Diệp', 'diep@gmail.com.com', '$2y$10$abcdefghijk1234567890diep', 'sc_b2c3d4e5f6',  'uploads/avatar/12.jpg', 'user'),
-('Phương Thảo', 'thao@gmail.com.com', '$2y$10$abcdefghijk1234567890thao', 'sc_c3d4e5f6g7',  'uploads/avatar/13.jpg', 'user'),
-('Đức Tài', 'tai@gmail.com.com', '$2y$10$abcdefghijk1234567890tai', 'sc_d4e5f6g7h8',  'uploads/avatar/14.jpg', 'user'),
-('Tấn Dũng', 'dung@gmail.com.com', '$2y$10$abcdefghijk1234567890dung', 'sc_e5f6g7h8i9',  'uploads/avatar/15.jpg', 'user'),
-('Bảo Vy', 'vy@gmail.com.com', '$2y$10$abcdefghijk1234567890vy', 'sc_f6g7h8i9j0',  'uploads/avatar/15.jpg', 'user'),
-('Quốc Huy', 'huy@gmail.com.com', '$2y$10$abcdefghijk1234567890huy', 'sc_g7h8i9j0k1',  'uploads/avatar/12.jpg', 'user'),
-('Thảo Linh', 'linh@gmail.com.com', '$2y$10$abcdefghijk1234567890linh', 'sc_h8i9j0k1l2',  'uploads/avatar/14.jpg', 'user'),
-('Đăng Khoa', 'dkhoa@gmail.com.com', '$2y$10$abcdefghijk1234567890dkhoa', 'sc_i9j0k1l2m3',  'uploads/avatar/15.jpg', 'user'),
-('Tuấn Kiệt', 'kiet@gmail.com.com', '$2y$10$abcdefghijk1234567890kiet', 'sc_j0k1l2m3n4',  'uploads/avatar/2.jpg', 'user');
+CREATE TABLE contacts (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `message` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+);
 
--- SCORES (samples)
+CREATE TABLE login_tokens (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `token` char(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `expiry` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`)
+);
+
+INSERT INTO users (name, email, password, secret_code, avatar, bio, created_at, last_activity, role) VALUES
+('Duy Luân', 'luan@gmail.com', '$2y$10$abcdefghijk1234567890luan', 'sc_1a2b3c4d5e', 'uploads/avatar/1.jpg', 'Admin đẹp trai nhất hệ mặt trời. Cấm hack cheat dưới mọi hình thức!', '2025-01-01 10:00:00','2025-02-01 10:00:00' , 'admin'),
+('Trọng Hoài', 'hoai@gmail.com', '$2y$10$abcdefghijk1234567890hoai', 'sc_2b3c4d5e6f', 'uploads/avatar/2.jpg', 'Chơi game vui là chính, thắng là mười. Cao thủ ẩn danh.', '2025-02-14 09:30:00', '2025-05-22 9:00:00', 'user'),
+('Minh Trí', 'tri@gmail.com', '$2y$10$abcdefghijk1234567890tri', 'sc_3c4d5e6f7g', 'uploads/avatar/3.jpg', 'Thích spam tháp pháo. Ai solo wave 50 không?', '2025-03-10 15:45:00', '2025-07-01 22:00:00','user'),
+('Anh Khoa', 'khoa@gmail.com', '$2y$10$abcdefghijk1234567890khoa', 'sc_4d5e6f7g8h', 'uploads/avatar/4.jpg', 'Đang tìm đồng đội gánh team. Hứa không AFK.', '2025-03-20 20:15:00','2025-07-22 10:00:00' , 'user'),
+('Vĩnh Thuận', 'thuan@gmail.com', '$2y$10$abcdefghijk1234567890thuan', 'sc_5e6f7g8h9i', 'uploads/avatar/5.jpg', 'Newbie tập chơi, xin các cao nhân chỉ giáo nhẹ tay.', '2025-04-05 11:20:00','2025-07-12 12:30:00', 'user'),
+('Hải Đăng', 'dang@gmail.com', '$2y$10$abcdefghijk1234567890dang', 'sc_6f7g8h9i0j', 'uploads/avatar/6.jpg', 'Sống nội tâm, hay khóc thầm khi để lọt quái.', '2025-05-01 08:00:00', '2025-07-29 16:30:00', 'user'),
+('Bảo Nam', 'nam@gmail.com', '$2y$10$abcdefghijk1234567890nam', 'sc_7g8h9i0j1k', 'uploads/avatar/7.jpg', 'Chuyên gia chiến thuật, bậc thầy phòng thủ.', '2025-06-12 14:50:00','2025-08-11 12:20:00', 'user'),
+('Hữu Lộc', 'loc@gmail.com', '$2y$10$abcdefghijk1234567890loc', 'sc_8h9i0j1k2l', 'uploads/avatar/8.jpg', 'Game là dễ (dễ thua).', '2025-07-07 19:30:00','2025-09-12 12:30:00', 'user'),
+('Thanh Phong', 'phong@gmail.com', '$2y$10$abcdefghijk1234567890phong', 'sc_9i0j1k2l3m', 'uploads/avatar/9.jpg', 'Yêu màu tím, thích sự thủy chung và ghét sự giả dối.', '2025-08-20 10:10:00','2025-11-20 12:30:00', 'user'),
+('Hồng Nhung', 'nhung@gmail.com', '$2y$10$abcdefghijk1234567890nhung', 'sc_0j1k2l3m4n', 'uploads/avatar/10.jpg', 'Cô gái vàng trong làng xây tháp.', '2025-09-02 16:40:00','2025-10-12 5:30:00', 'user'),
+('Quang Minh', 'minh@gmail.com', '$2y$10$abcdefghijk1234567890minh', 'sc_a1b2c3d4e5', 'uploads/avatar/11.jpg', 'Leo rank là đam mê, rớt hạng là thói quen.', '2025-09-15 22:00:00','2025-09-20 12:30:00', 'user'),
+('Ngọc Diệp', 'diep@gmail.com', '$2y$10$abcdefghijk1234567890diep', 'sc_b2c3d4e5f6', 'uploads/avatar/12.jpg', 'Chỉ chơi game vào cuối tuần. Đừng rủ ngày thường.', '2025-10-01 13:25:00','2025-11-01 22:30:00', 'user'),
+('Phương Thảo', 'thao@gmail.com', '$2y$10$abcdefghijk1234567890thao', 'sc_c3d4e5f6g7', 'uploads/avatar/13.jpg', 'Mục tiêu: Top 1 Server Global.', '2025-10-20 18:18:00','2025-10-05 20:30:00', 'user'),
+('Đức Tài', 'tai@gmail.com', '$2y$10$abcdefghijk1234567890tai', 'sc_d4e5f6g7h8', 'uploads/avatar/14.jpg', 'Kỹ năng có hạn, thủ đoạn vô biên.', '2025-11-11 09:09:00','2025-11-20 13:40:00', 'user'),
+('Tấn Dũng', 'dung@gmail.com', '$2y$10$abcdefghijk1234567890dung', 'sc_e5f6g7h8i9', 'uploads/avatar/15.jpg', 'Đang bận giải cứu thế giới, vui lòng để lại lời nhắn.', '2025-11-25 15:30:00','2025-11-28 12:30:00', 'user'),
+('Bảo Vy', 'vy@gmail.com', '$2y$10$abcdefghijk1234567890vy', 'sc_f6g7h8i9j0', 'uploads/avatar/15.jpg', 'Fan cứng Tower Defense 10 năm.', '2025-11-01 21:00:00','2025-11-22 12:30:00', 'user'),
+('Quốc Huy', 'huy@gmail.com', '$2y$10$abcdefghijk1234567890huy', 'sc_g7h8i9j0k1', 'uploads/avatar/12.jpg', 'Không nạp tiền vẫn mạnh (chắc thế).', '2025-11-12 12:12:00','2025-11-15 4:00:00', 'user'),
+('Thảo Linh', 'linh@gmail.com', '$2y$10$abcdefghijk1234567890linh', 'sc_h8i9j0k1l2', 'uploads/avatar/14.jpg', 'Thích đi mid nhưng game này không có mid.', '2025-01-01 00:01:00','2025-07-12 18:50:00', 'user'),
+('Đăng Khoa', 'dkhoa@gmail.com', '$2y$10$abcdefghijk1234567890dkhoa', 'sc_i9j0k1l2m3', 'uploads/avatar/15.jpg', 'Mất ngủ vì wave cuối.', '2025-01-10 07:45:00','2025-06-25 12:30:00', 'user'),
+('Tuấn Kiệt', 'kiet@gmail.com', '$2y$10$abcdefghijk1234567890kiet', 'sc_j0k1l2m3n4', 'uploads/avatar/2.jpg', 'Chơi game để quên đi deadline.', '2025-01-15 17:20:00','2025-09-23 23:10:00', 'user');
+
 INSERT INTO scores (user_id, score, enemies_killed, gold_left, duration_seconds) VALUES
-(1, 950, 88, 150, 80),
-(1, 820, 75, 120, 90),
-(2, 640, 60, 100, 120),
-(2, 720, 68, 90, 110),
-(3, 1200, 95, 200, 60),
-(4, 450, 40, 90, 130),
-(5, 780, 70, 140, 100),
-(6, 1010, 90, 180, 70),
-(7, 870, 78, 110, 85),
-(8, 560, 55, 95, 120),
-(9, 920, 82, 130, 95),
-(10, 980, 89, 150, 88),
-(11, 1110, 96, 210, 75),
-(12, 630, 59, 105, 125),
-(13, 700, 66, 115, 110),
-(14, 850, 77, 140, 90),
-(15, 1040, 92, 190, 80),
-(16, 880, 80, 160, 95),
-(17, 970, 88, 170, 85),
-(18, 790, 70, 135, 100),
-(19, 1080, 93, 200, 78),
-(20, 910, 81, 150, 90),
-(10, 1020, 94, 200, 82),
-(5, 800, 72, 145, 95),
-(3, 1180, 92, 180, 65),
-(15, 1070, 97, 195, 70),
-(6, 990, 85, 160, 85),
-(12, 660, 60, 115, 115),
-(14, 870, 79, 130, 92),
-(19, 1115, 98, 220, 68);
+(1, 116, 29, 50, 26),
+(1, 273, 25, 40, 30),
+(2, 213, 20, 33, 40),
+(2, 240, 22, 30, 36),
+(3, 300, 31, 66, 20),
+(4, 150, 13, 30, 43),
+(5, 260, 23, 46, 33),
+(6, 336, 30, 60, 23),
+(7, 290, 26, 36, 28),
+(8, 186, 18, 31, 40),
+(9, 306, 27, 43, 31),
+(10, 226, 29, 50, 29),
+(11, 270, 32, 70, 25),
+(12, 210, 19, 35, 41),
+(13, 233, 22, 38, 36),
+(14, 283, 25, 46, 30),
+(15, 246, 30, 63, 26),
+(16, 293, 26, 53, 31),
+(17, 223, 29, 56, 28),
+(18, 263, 23, 45, 33),
+(19, 260, 31, 66, 26),
+(20, 303, 27, 50, 30),
+(10, 240, 31, 66, 27),
+(5, 266, 24, 48, 31),
+(3, 293, 30, 60, 21),
+(15, 256, 32, 65, 23),
+(6, 230, 28, 53, 28),
+(12, 220, 20, 38, 38),
+(14, 290, 26, 43, 30),
+(19, 271, 32, 73, 22);
 
 INSERT INTO posts (user_id, title, content) VALUES
 (1, 'Mẹo đạt 300+ điểm trong Tower Defense', 'Hãy đặt tháp ở các đoạn cua để tối ưu sát thương.'),
@@ -243,3 +262,14 @@ INSERT INTO comment_images (comment_id, image_path) VALUES
 (13, 'uploads/comments/13.png'),
 (15, 'uploads/comments/14.png'),
 (19, 'uploads/comments/15.png');
+
+INSERT INTO contacts (`name`, `email`, `message`, `created_at`, `is_read`) VALUES
+('Trọng Hoài', 'hoaitruong@gmail.com', 'Tôi không thể đăng nhập vào game sáng nay, xin hãy kiểm tra giúp.', '2025-11-01 08:30:00', 1),
+('Duy Luân', 'duyluan@gmail.com', 'Game rất hay, đồ họa đẹp mắt. Cảm ơn đội ngũ phát triển!', '2025-11-02 09:45:00', 0),
+('Gia Khánh', 'giakhanh@gmail.com', 'Tôi phát hiện một lỗi là quái vật bị kẹt vào tường.', '2025-11-03 10:15:00', 0),
+('Châu Đôn', 'chaudon@gmail.com', 'Làm sao để nạp thẻ vào game vậy admin? Tôi không tìm thấy nút nạp.', '2023-11-04 11:00:00', 1),
+('Vĩnh Thuận', 'vinhthuan@gmail.com', 'Tôi bị quên mã bí mật, làm sao để lấy lại?', '2025-11-05 14:20:00', 0),
+('Quang Vinh', 'quangvinh@gmail.com', 'Đề nghị thêm tính năng chat voice trong trận đấu.', '2025-11-06 15:30:00', 1),
+('Đăng Khoa', 'dangkhoa@gmail.com', 'Tài khoản của tôi bị khóa không rõ lý do, tên nhân vật là ĐăngKhoaaa.', '2023-11-07 16:45:00', 0),
+('Thanh Tú', 'thanhtu@gmail.com', 'Sự kiện trung thu vừa rồi phần thưởng chưa được gửi về hòm thư.', '2025-11-08 08:00:00', 1),
+('Khải Đăng', 'khaidang@gmail.com', 'Nhạc nền game hơi to so với tiếng hiệu ứng, admin chỉnh lại nhé.', '2025-11-09 09:10:00', 0);
