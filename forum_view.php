@@ -175,7 +175,8 @@ $comments = $stmtC2->get_result();
 
         <!-- Comments -->
         <div class="fb-comments">
-            <?php while ($c = $comments->fetch_assoc()): ?>
+            <?php while ($c = $comments->fetch_assoc()):
+                 $cid = $c['id'];  ?>
                 <div class="fb-comment">
                     <a href="user_profile.php?id=<?= $c['user_id'] ?>">
                         <img class="avatar" src="<?= $c['author_avatar'] ?: 'uploads/avatar/default.png' ?>" alt="Avatar">
@@ -190,7 +191,14 @@ $comments = $stmtC2->get_result();
                         </strong>
 
                         <span style="font-size:0.8em; color:#65676b;"> • <?= formatDateVN($c['created_at']) ?></span>
-                        <p><?= htmlspecialchars($c['content']) ?></p>
+                        <p class="cmt-content" id="cmt_content_<?= $cid ?>"><?= htmlspecialchars($c['content']) ?></p>
+
+                            <div class="cmt-edit-inline" id="edit_box_<?= $cid ?>" style="display:none; margin-top:5px;">
+                                <textarea id="edit_text_<?= $cid ?>" rows="3" style="width:100%; padding:6px;resize: none"><?= htmlspecialchars($c['content']) ?></textarea>
+                                <button onclick="saveComment(<?= $cid ?>)" style="margin-right:5px;">💾 Lưu</button>
+                                <button onclick="cancelEdit(<?= $cid ?>)">Hủy</button>
+                            </div>
+
                         <?php
                         $cid = $c['id'];
                         $img = $conn->query("SELECT image_path FROM comment_images WHERE comment_id = $cid")->fetch_assoc();
@@ -205,7 +213,11 @@ $comments = $stmtC2->get_result();
                             <div style="margin-top:5px;">
                                 <!-- Chỉ chủ bình luận mới được sửa -->
                                 <?php if ($isCommentAuthor): ?>
-                                    <a href="comment_edit.php?id=<?= $c['id'] ?>&post=<?= $post_id ?>" style="font-size:0.8em; color:#1877f2; margin-right:10px;">Sửa</a>
+                                    <a href="javascript:void(0)" onclick="editComment(<?= $cid ?>)" 
+                                    style="font-size:0.8em; color:#1877f2; margin-right:10px;">
+                                    Sửa
+                                    </a>
+
                                 <?php endif; ?>
                                 
                                 <!-- Chủ bình luận HOẶC Admin được xoá -->
@@ -265,6 +277,44 @@ document.getElementById("shareBtn").onclick = function() {
         setTimeout(() => { box.style.display = "none"; }, 2000);
     });
 };
+</script>
+<script>
+// Bật chế độ sửa
+function editComment(id) {
+    document.getElementById("cmt_content_" + id).style.display = "none";
+    document.getElementById("edit_box_" + id).style.display = "block";
+}
+
+// Hủy sửa
+function cancelEdit(id) {
+    document.getElementById("edit_box_" + id).style.display = "none";
+    document.getElementById("cmt_content_" + id).style.display = "block";
+}
+
+// Lưu comment qua AJAX
+function saveComment(id) {
+    const newContent = document.getElementById("edit_text_" + id).value.trim();
+    if (newContent === "") {
+        alert("Nội dung không được để trống.");
+        return;
+    }
+
+    fetch("comment_edit.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "id=" + id + "&content=" + encodeURIComponent(newContent)
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.error) {
+            alert("Lỗi: " + d.error);
+            return;
+        }
+
+        document.getElementById("cmt_content_" + id).innerHTML = d.content;
+        cancelEdit(id);
+    });
+}
 </script>
 
 <?php include 'includes/footer.php'; ?>

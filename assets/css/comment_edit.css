@@ -1,91 +1,65 @@
-/* ========================= */
-/*   COMMENT EDIT – CSS      */
-/* ========================= */
-
-.cmt-edit-container {
-    width: 700px;            /* To y như create post */
-    margin: 0px auto;
-    background: #fff;
-    padding: 40px;               /* Giảm từ 50px xuống 40px cho cân đối */
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    font-family: "Segoe UI", Tahoma, sans-serif;
-    font-size: 15px;
-    margin-bottom: 120px;
-}
-
-
-
-.cmt-edit-title {
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 20px;
-}
-
-/* textarea */
-.cmt-edit-textarea {
+/* Khung chỉnh sửa comment */
+.cmt-edit-inline {
+    background: #f0f2f5;              /* giống bubble comment */
+    padding: 10px 12px;
+    border-radius: 18px;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
     width: 100%;
-    padding: 12px 14px;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    font-size: 15px;
-    resize: vertical;
-    min-height: 120px;
-    resize: none !important;
-    
 }
 
-.cmt-edit-textarea:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, .25);
+/* Textarea đẹp, không được kéo */
+.cmt-edit-inline textarea {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    padding: 8px 10px;
+    font-size: 0.9em;
+    font-family: inherit;
+    resize: none !important;     /* NGĂN KHÔNG CHO KÉO */
+    background: white;
+    line-height: 1.4;
+    box-sizing: border-box;
 }
 
-/* nút dưới */
-.cmt-edit-actions {
+/* Nhóm nút */
+.cmt-edit-inline .edit-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    margin-top: 20px;
+    gap: 8px;
 }
 
-.cmt-edit-save {
-    padding: 10px 20px;
-    background: #2563eb;
-    color: #fff;
+/* Nút Lưu */
+.cmt-edit-inline .btn-save {
+    padding: 6px 14px;
+    background: #1877f2;
     border: none;
-    border-radius: 10px;
+    color: white;
+    border-radius: 18px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 0.9em;
+    transition: background .2s;
 }
 
-.cmt-edit-save:hover {
-    background: #1e4ed8;
+.cmt-edit-inline .btn-save:hover {
+    background: #145dbf;
 }
 
-.cmt-edit-cancel {
-    padding: 10px 20px;
-    background: #e5e7eb;
-    color: #333;
-    border-radius: 10px;
-    text-decoration: none;
+/* Nút Hủy */
+.cmt-edit-inline .btn-cancel {
+    padding: 6px 14px;
+    background: #e4e6eb;
+    border: none;
+    color: #050505;
+    border-radius: 18px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background .2s;
 }
 
-.cmt-edit-cancel:hover {
-    background: #d4d4d4;
-}
-
-/* message */
-.cmt-edit-msg {
-    background: #fff;
-    padding: 20px;
-    margin: 50px auto;
-    width: 400px;
-    text-align: center;
-    border-radius: 10px;
-}
-
-.cmt-edit-login {
-    color: #2563eb;
-    font-weight: bold;
+.cmt-edit-inline .btn-cancel:hover {
+    background: #d8dade;
 }
