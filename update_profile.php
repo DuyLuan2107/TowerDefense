@@ -23,7 +23,7 @@ if (isset($_POST['change_avatar'])) {
         move_uploaded_file($file['tmp_name'], $filename);
 
         $query = $conn->prepare("UPDATE users SET avatar=? WHERE id=?");
-        $query->execute([$filename, $user_id]);
+        $query->execute(params: [$filename, $user_id]);
 
         $_SESSION['user']['avatar'] = $filename;
         $_SESSION['update_success'] = "Avatar đã được cập nhật!";
