@@ -174,7 +174,7 @@ $result = $stmt->get_result();
         5 => 'Tháng 5', 6 => 'Tháng 6', 7 => 'Tháng 7', 8 => 'Tháng 8',
         9 => 'Tháng 9', 10 => 'Tháng 10', 11 => 'Tháng 11', 12 => 'Tháng 12'
     ];
-    $formattedDate = $date->format('d') . ' ' . $monthNames[(int)$date->format('m')] . ' ' . $date->format('Y');
+    $formattedDate = $date->format('d') . ' ' . $monthNames[(int)$date->format('m')] . ' ' . $date->format('Y') . ' lúc ' . $date->format('H:i');
     ?>
     <div class="date" style="font-size:0.9em; color:#777;">
         <?= $formattedDate ?>
