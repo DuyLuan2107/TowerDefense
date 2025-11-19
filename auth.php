@@ -60,10 +60,10 @@ if (isset($_POST['register'])) { // Code này sẽ chạy nhờ thẻ input hidd
             $message = "<div class='auth-message error'>❌ Email này đã được sử dụng!</div>";
         } else {
             // Xử lý Upload Avatar
-            $avatarPath = "uploads/default.png"; // Ảnh mặc định
+            $avatarPath = "uploads/avatar/default.png"; // Ảnh mặc định
             
             if (!empty($_FILES['avatar']['name'])) {
-                $target_dir = "uploads/";
+                $target_dir = "uploads/avatar";
                 // Tạo tên file ngẫu nhiên để tránh trùng
                 $file_extension = pathinfo($_FILES["avatar"]["name"], PATHINFO_EXTENSION);
                 $new_filename = uniqid() . '.' . $file_extension;
