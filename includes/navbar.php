@@ -144,7 +144,7 @@ $isGamePage = ($currentPage === 'game.php');
 }
 .logout-btn:hover {
     background: linear-gradient(90deg, #ffae40 0%, #ff7354 100%);
-    color: #fff !imporant;
+    color: #fff !important;
     box-shadow: 0 0 10px rgba(240, 152, 25, 0.5);
 }
 
