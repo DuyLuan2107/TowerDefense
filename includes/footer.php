@@ -10,7 +10,27 @@
 <!-- Google Material Symbols (icons) -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" />
 <!-- Chatbot styles (root-relative to project folder) -->
-<link rel="stylesheet" href="/TowerDefense/chatbotai/style.css" />
+<?php
+$docRoot = realpath($_SERVER['DOCUMENT_ROOT']);
+$projectDir = realpath(__DIR__ . '/..'); // includes/ -> project root
+$root = '';
+if ($docRoot !== false && $projectDir !== false) {
+    $docRoot = str_replace('\\', '/', $docRoot);
+    $projectDir = str_replace('\\', '/', $projectDir);
+    if (strpos($projectDir, $docRoot) === 0) {
+        $root = substr($projectDir, strlen($docRoot));
+        $root = $root === '' ? '' : '/' . trim($root, '/');
+    }
+}
+if ($root === '') {
+    // Fallback to older behavior: use first segment of SCRIPT_NAME
+    $script_name = trim($_SERVER['SCRIPT_NAME'], '/');
+    $parts = $script_name === '' ? [] : explode('/', $script_name);
+    $root = (isset($parts[0]) && $parts[0] !== '') ? '/' . $parts[0] : '';
+}
+$style_url = $root . '/chatbotai/style.css';
+?>
+<link rel="stylesheet" href="<?php echo $style_url; ?>" />
 
 <?php
 // Include the chatbot HTML fragment (button + popup).
@@ -22,7 +42,10 @@ include_once __DIR__ . '/../chatbotai/chatbot.php';
 <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.17.2/dist/sweetalert2.all.min.js"></script>
 <!-- Chatbot script (root-relative) -->
-<script src="/TowerDefense/chatbotai/script.js"></script>
+<?php
+$script_url = $root . '/chatbotai/script.js';
+?>
+<script src="<?php echo $script_url; ?>"></script>
 
 </body>
 </html>
