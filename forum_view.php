@@ -9,7 +9,7 @@ function formatDateVN($datetime) {
         5 => 'Tháng 5', 6 => 'Tháng 6', 7 => 'Tháng 7', 8 => 'Tháng 8',
         9 => 'Tháng 9', 10 => 'Tháng 10', 11 => 'Tháng 11', 12 => 'Tháng 12'
     ];
-    return $date->format('d') . ' ' . $monthNames[(int)$date->format('m')] . ' ' . $date->format('Y');
+    return $date->format('d') . ' ' . $monthNames[(int)$date->format('m')] . ' ' . $date->format('Y') . ' lúc ' . $date->format('H:i');
 }
 
 // --- KIỂM TRA QUYỀN ADMIN ---
@@ -56,13 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
   } else {
     $content = trim($_POST['content'] ?? '');
     $imageSelected = isset($_FILES['comment_image']) && $_FILES['comment_image']['error'] === UPLOAD_ERR_OK;
+    $parent_comment_id = isset($_POST['parent_comment_id']) && $_POST['parent_comment_id'] !== '' ? (int)$_POST['parent_comment_id'] : NULL;
 
     if ($content === '' && !$imageSelected) {
         echo "<script>alert('Bình luận phải có nội dung hoặc ảnh.');</script>";
     } else {
         $uid = (int)$_SESSION['user']['id'];
-        $stmtC = $conn->prepare("INSERT INTO comments (post_id, user_id, content) VALUES (?,?,?)");
-        $stmtC->bind_param("iis", $post_id, $uid, $content);
+        $is_reply = $parent_comment_id !== NULL ? 1 : 0;
+        $stmtC = $conn->prepare("INSERT INTO comments (post_id, user_id, content, parent_comment_id, is_reply) VALUES (?,?,?,?,?)");
+        $stmtC->bind_param("iisii", $post_id, $uid, $content, $parent_comment_id, $is_reply);
         $stmtC->execute();
         $comment_id = $stmtC->insert_id;
 
@@ -83,20 +85,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
             }
         }
 
-        header("Location: forum_view.php?id=".$post_id);
+        // Giữ lại cách sắp xếp
+        $sort_param = isset($_GET['sort']) ? '&sort=' . $_GET['sort'] : '';
+        $order_param = isset($_GET['order']) ? '&order=' . $_GET['order'] : '';
+        header("Location: forum_view.php?id=".$post_id.$sort_param.$order_param);
         exit;
     }
   }
 }
+
+// Lấy thông tin bình luận để trả lời (AJAX)
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'get_comment') {
+    if (!isset($_GET['cid'])) {
+        echo json_encode(['error' => 'Comment ID not provided']);
+        exit;
+    }
+    
+    $cid = (int)$_GET['cid'];
+    $sql = "SELECT c.id, c.content, u.name FROM comments c 
+            JOIN users u ON u.id = c.user_id 
+            WHERE c.id = ? AND c.post_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $cid, $post_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($comment = $result->fetch_assoc()) {
+        echo json_encode($comment);
+    } else {
+        echo json_encode(['error' => 'Comment not found']);
+    }
+    exit;
+}
 include 'includes/header.php';
-// Lấy danh sách bình luận
-$sqlC = "SELECT c.*, u.name AS author, u.avatar AS author_avatar 
-          FROM comments c JOIN users u ON u.id = c.user_id 
-          WHERE c.post_id = ? ORDER BY c.created_at ASC";
+
+// Lấy tham số sắp xếp
+$sort_by = $_GET['sort'] ?? 'time'; // 'time' hoặc 'likes'
+$order = $_GET['order'] ?? 'asc'; // 'asc' hoặc 'desc'
+
+// Xây dựng câu query sắp xếp
+if ($sort_by === 'likes') {
+    $sqlC = "SELECT c.*, u.name AS author, u.avatar AS author_avatar,
+            (SELECT COUNT(*) FROM comment_likes WHERE comment_id = c.id) as like_count
+            FROM comments c JOIN users u ON u.id = c.user_id 
+            WHERE c.post_id = ? 
+            ORDER BY like_count " . ($order === 'desc' ? 'DESC' : 'ASC') . ", c.created_at ASC";
+} else {
+    $sqlC = "SELECT c.*, u.name AS author, u.avatar AS author_avatar 
+            FROM comments c JOIN users u ON u.id = c.user_id 
+            WHERE c.post_id = ? 
+            ORDER BY c.created_at " . ($order === 'desc' ? 'DESC' : 'ASC');
+}
+
 $stmtC2 = $conn->prepare($sqlC);
 $stmtC2->bind_param("i", $post_id);
 $stmtC2->execute();
 $comments = $stmtC2->get_result();
+
+// Hàm đếm số like của bình luận
+function getCommentLikes($conn, $comment_id) {
+    $sql = "SELECT COUNT(*) as total FROM comment_likes WHERE comment_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $comment_id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc()['total'];
+}
+
+// Hàm kiểm tra user đã like bình luận chưa
+function hasUserLikedComment($conn, $comment_id, $user_id) {
+    $sql = "SELECT id FROM comment_likes WHERE comment_id = ? AND user_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $comment_id, $user_id);
+    $stmt->execute();
+    return $stmt->get_result()->num_rows > 0;
+}
+
+// Hàm lấy thông tin bình luận cha
+function getParentComment($conn, $parent_id) {
+    $sql = "SELECT c.id, c.content, u.name FROM comments c 
+            JOIN users u ON u.id = c.user_id 
+            WHERE c.id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $parent_id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
+}
 ?>
 
         <div class="fb-post-container">
@@ -175,6 +248,25 @@ $comments = $stmtC2->get_result();
 
         <!-- Comments -->
         <div class="fb-comments">
+            <!-- Menu sắp xếp dropdown -->
+            <div style="margin-bottom:15px; padding:10px; background:#f0f2f5; border-radius:8px; display:flex; gap:15px; align-items:center; font-size:0.9em;">
+                <strong>Sắp xếp theo:</strong>
+                <select id="sort-by" onchange="updateSort()" style="padding:8px 12px; border-radius:5px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:0.9em;">
+                    <option value="time" <?= $sort_by === 'time' ? 'selected' : '' ?>>Thời gian</option>
+                    <option value="likes" <?= $sort_by === 'likes' ? 'selected' : '' ?>>Số tim</option>
+                </select>
+                <select id="order" onchange="updateSort()" style="padding:8px 12px; border-radius:5px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:0.9em;">
+                    <option value="asc" <?= $order === 'asc' ? 'selected' : '' ?>>Tăng dần</option>
+                    <option value="desc" <?= $order === 'desc' ? 'selected' : '' ?>>Giảm dần</option>
+                </select>
+            </div>
+            <script>
+            function updateSort() {
+                const sortBy = document.getElementById('sort-by').value;
+                const order = document.getElementById('order').value;
+                window.location.href = 'forum_view.php?id=<?= $post_id ?>&sort=' + sortBy + '&order=' + order;
+            }
+            </script>
             <?php while ($c = $comments->fetch_assoc()):
                  $cid = $c['id'];  ?>
                 <div class="fb-comment">
@@ -191,6 +283,28 @@ $comments = $stmtC2->get_result();
                         </strong>
 
                         <span style="font-size:0.8em; color:#65676b;"> • <?= formatDateVN($c['created_at']) ?></span>
+                        
+                        <!-- Hiển thị bình luận gốc nếu là trả lời -->
+                        <?php if ($c['is_reply']): 
+                            if ($c['parent_comment_id']) {
+                                $parent = getParentComment($conn, $c['parent_comment_id']);
+                            } else {
+                                $parent = null;
+                            }
+                        ?>
+                            <?php if ($parent): ?>
+                                <div style="background:#f0f2f5; border-left:4px solid #1877f2; padding:8px 12px; margin:8px 0; border-radius:4px; font-size:0.85em;">
+                                    <strong style="color:#1877f2;">Trả lời: <?= htmlspecialchars($parent['name']) ?></strong>
+                                    <p style="margin:5px 0 0 0; color:#555;"><?= htmlspecialchars(substr($parent['content'], 0, 100)) ?><?= strlen($parent['content']) > 100 ? '...' : '' ?></p>
+                                </div>
+                            <?php else: ?>
+                                <div style="background:#f5f5f5; border-left:4px solid #999; padding:8px 12px; margin:8px 0; border-radius:4px; font-size:0.85em;">
+                                    <strong style="color:#999;">Trả lời: Bình luận gốc đã bị xóa</strong>
+                                    <p style="margin:5px 0 0 0; color:#999; font-style:italic;">Nội dung không còn tồn tại</p>
+                                </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
                         <p class="cmt-content" id="cmt_content_<?= $cid ?>"><?= htmlspecialchars($c['content']) ?></p>
 
                             <div class="cmt-edit-inline" id="edit_box_<?= $cid ?>" style="display:none; margin-top:5px;">
@@ -209,8 +323,23 @@ $comments = $stmtC2->get_result();
                         <?php if (isset($_SESSION['user'])): ?>
                             <?php 
                                 $isCommentAuthor = $_SESSION['user']['id'] == $c['user_id'];
+                                $commentLikes = getCommentLikes($conn, $cid);
+                                $userLikedComment = hasUserLikedComment($conn, $cid, $_SESSION['user']['id']);
                             ?>
                             <div style="margin-top:5px;">
+                                <!-- Nút Like bình luận -->
+                                <a href="javascript:void(0)" onclick="likeComment(<?= $cid ?>)" 
+                                id="like-btn-<?= $cid ?>" 
+                                style="font-size:0.8em; color:#1877f2; margin-right:10px; text-decoration:none;">
+                                <?= $userLikedComment ? '❤️' : '🤍' ?> <span id="like-count-<?= $cid ?>"><?= $commentLikes ?></span>
+                                </a>
+                                
+                                <!-- Nút Trả lời -->
+                                <a href="javascript:void(0)" onclick="replyComment(<?= $cid ?>, '<?= htmlspecialchars(addslashes($c['author'])) ?>')" 
+                                style="font-size:0.8em; color:#1877f2; margin-right:10px;">
+                                Trả lời
+                                </a>
+
                                 <!-- Chỉ chủ bình luận mới được sửa -->
                                 <?php if ($isCommentAuthor): ?>
                                     <a href="javascript:void(0)" onclick="editComment(<?= $cid ?>)" 
@@ -234,7 +363,17 @@ $comments = $stmtC2->get_result();
     <form class="fb-comment-form" method="post" enctype="multipart/form-data">
         <img class="avatar" src="<?= htmlspecialchars($_SESSION['user']['avatar'] ?? 'uploads/avatar/default.png') ?>" alt="Avatar">
         <div class="input-container">
-            <textarea name="content" rows="2" placeholder="Viết bình luận..."></textarea>
+            <!-- Khung hiển thị bình luận được trả lời -->
+            <div id="reply-quote" style="display:none; background:#f0f2f5; border-left:4px solid #1877f2; padding:8px 12px; margin-bottom:8px; border-radius:4px; font-size:0.9em;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="color:#1877f2;">Trả lời: <span id="reply-author"></span></strong>
+                    <a href="javascript:void(0)" onclick="cancelReply()" style="color:#65676b; cursor:pointer; font-size:1.2em;">✕</a>
+                </div>
+                <div style="margin-top:5px; color:#555; font-style:italic;" id="reply-content"></div>
+            </div>
+            <textarea name="content" rows="2" placeholder="Viết bình luận..." onkeydown="handleCommentKeypress(event)"></textarea>
+            <!-- Input ẩn để lưu ID bình luận được trả lời -->
+            <input type="hidden" id="parent-comment-id" name="parent_comment_id" value="">
             <div class="controls">
                 <input type="file" name="comment_image" accept="image/*">
                 <button type="submit" name="comment">Gửi</button>
@@ -313,6 +452,80 @@ function saveComment(id) {
 
         document.getElementById("cmt_content_" + id).innerHTML = d.content;
         cancelEdit(id);
+    });
+}
+
+// Trả lời bình luận
+function replyComment(commentId, authorName) {
+    // Lấy nội dung bình luận qua AJAX
+    fetch("forum_view.php?action=get_comment&cid=" + commentId + "&id=<?= $post_id ?>")
+    .then(r => r.json())
+    .then(d => {
+        if (d.error) {
+            alert("Lỗi: " + d.error);
+            return;
+        }
+        
+        // Hiển thị khung quote
+        document.getElementById("reply-quote").style.display = "block";
+        document.getElementById("reply-author").textContent = authorName;
+        document.getElementById("reply-content").textContent = d.content.substring(0, 100) + (d.content.length > 100 ? "..." : "");
+        document.getElementById("parent-comment-id").value = commentId;
+        
+        // Focus vào textarea
+        const textarea = document.querySelector('.fb-comment-form textarea');
+        textarea.focus();
+        textarea.scrollIntoView({ behavior: "smooth" });
+    });
+}
+
+// Hủy trả lời
+function cancelReply() {
+    document.getElementById("reply-quote").style.display = "none";
+    document.getElementById("reply-author").textContent = "";
+    document.getElementById("reply-content").textContent = "";
+    document.getElementById("parent-comment-id").value = "";
+}
+
+// Xử lý phím tắt Shift+Enter để gửi bình luận
+function handleCommentKeypress(event) {
+    if (event.key === 'Enter' && event.shiftKey) {
+        event.preventDefault();
+        // Tìm form chứa textarea này
+        const form = event.target.closest('form');
+        if (form) {
+            // Kích hoạt nút submit
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.click();
+            }
+        }
+        return false;
+    }
+}
+
+// Like bình luận
+function likeComment(commentId) {
+    fetch("api/comment_like.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "comment_id=" + commentId
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.error === "not_logged_in") {
+            alert("Bạn cần đăng nhập để like.");
+            return;
+        }
+        
+        const btn = document.getElementById("like-btn-" + commentId);
+        const countSpan = document.getElementById("like-count-" + commentId);
+        
+        if (d.status === "liked") {
+            btn.innerHTML = '❤️ <span id="like-count-' + commentId + '">' + d.likes + '</span>';
+        } else {
+            btn.innerHTML = '🤍 <span id="like-count-' + commentId + '">' + d.likes + '</span>';
+        }
     });
 }
 </script>
