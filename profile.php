@@ -64,7 +64,13 @@ if (!empty($user['created_at'])) {
 }
 
 
-$bio = $user['bio'] ?? 'Người dùng này chưa có tiểu sử.';
+$bio_raw = $user['bio'] ?? '';
+$bio = trim($bio_raw);
+
+if ($bio === '') {
+    $bio = 'Người dùng này chưa có tiểu sử.';
+}
+
 
 // Đường dẫn avatar dự phòng
 $avatar = $user['avatar'] ?? 'uploads/avatar/default.png';
@@ -145,7 +151,13 @@ $score_history_result = $stmt_score_history->get_result();
     color: var(--text-primary);
 }
 
-    .profile-header { display: flex; gap: 1.5rem; align-items: center; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); }
+    .profile-header {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;   /* GIỮ AVATAR TRÊN CÙNG */
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    }
     .profile-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.15); flex-shrink: 0; }
     .profile-info { flex-grow: 1; }
     .profile-info h2 { margin: 0 0 0.25rem; font-size: 2rem; color: var(--text-primary); }
@@ -314,11 +326,15 @@ $score_history_result = $stmt_score_history->get_result();
     }
 
     .update-section {
-        background:#fff;
-        padding:20px;
-        border-radius:12px;
-        box-shadow:0 2px 12px rgba(0,0,0,0.1);
-        margin-top:10px;
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.1);
+    margin-top:10px;
+
+    max-width: 500px;     /* 🔥 KHUNG NHỎ LẠI */
+    margin-left: auto;    /* 🔥 CĂN GIỮA */
+    margin-right: auto;   /* 🔥 CĂN GIỮA */
     }
 
     .update-box {
@@ -344,6 +360,114 @@ $score_history_result = $stmt_score_history->get_result();
     }
     .alert.error { background:#ffd6d6; color:#a30000; }
     .alert.success { background:#d9ffe2; color:#006622; }
+    .btn-edit-bio {
+    margin-top: 8px;
+    background:#0866ff;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:0.85rem;
+}
+
+    .bio-edit-box {
+        background:#f0f0f0;
+        padding:12px;
+        border-radius:8px;
+        margin-top:10px;
+    }
+
+    .bio-textarea {
+        width:100%;
+        height:80px;
+        padding:5px;
+        border-radius:6px;
+        border:1px solid #ccc;
+        resize: none;
+    }
+
+    .btn-save-bio {
+        margin-top:8px;
+        background:#28a745;
+        color:white;
+        border:none;
+        padding:8px 14px;
+        border-radius:6px;
+        cursor:pointer;
+    }
+    .bio-edit-wrapper {
+    margin-bottom: 10px;
+}
+
+    .status-wrapper {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .update-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .update-card {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: 0.2s;
+        
+    }
+
+    .update-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .card-icon {
+        font-size: 1.6rem;
+    }
+
+    .card-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .input-text, .input-file {
+        width: 94%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin-bottom: 12px;
+        font-size: 1rem;
+    }
+
+    .btn-update-green {
+        background: #28a745;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 8px;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: 0.2s;
+    }
+
+    .btn-update-green:hover {
+        background: #1f8b38;
+    }
+    
 
 
 </style>
@@ -357,22 +481,39 @@ $score_history_result = $stmt_score_history->get_result();
             <h2><?= htmlspecialchars($user['name']) ?></h2>
             <p class="email"><?= htmlspecialchars($user['email']) ?></p>
 
+            <!-- BIO & EDIT -->
             <p class="profile-bio"><?= htmlspecialchars($bio) ?></p>
 
-            <?php if ($is_online): ?>
-                <span class="status-badge online">● Đang hoạt động</span>
-            <?php else: ?>
-                <span class="status-badge offline">● Ngoại tuyến</span>
-            <?php endif; ?>
+            <!-- KHỐI EDIT BIO (ở trên) -->
+            <div class="bio-edit-wrapper">
+                <button class="btn-edit-bio" onclick="toggleBioForm()">✏️ Chỉnh sửa tiểu sử</button>
+
+                <div id="bioForm" class="bio-edit-box" style="display:none;">
+                    <form action="update_profile.php" method="POST">
+                        <textarea name="new_bio" class="bio-textarea"><?= htmlspecialchars($bio) ?></textarea>
+                        <button type="submit" name="change_bio" class="btn-save-bio">Lưu tiểu sử</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- KHỐI TRẠNG THÁI (ở dưới) -->
+            <div class="status-wrapper">
+                <?php if ($is_online): ?>
+                    <span class="status-badge online">● Đang hoạt động</span>
+                <?php else: ?>
+                    <span class="status-badge offline">● Ngoại tuyến</span>
+                <?php endif; ?>
+
                 <a href="logout.php" class="logout-btn-inline">Đăng xuất</a>
+            </div>
+
+
             <p class="last-activity">
                 Hoạt động gần nhất: <?= $last_activity_formatted ?>
             </p>
 
             <div class="profile-extra-info">
-                <span class="info-item">
-                    <strong>Tham gia:</strong> <?= $join_date ?>
-                </span>
+                <span class="info-item"><strong>Tham gia:</strong> <?= $join_date ?></span>
             </div>
         </div>
     </div>
@@ -393,31 +534,52 @@ $score_history_result = $stmt_score_history->get_result();
         </div>
     <?php endif; ?>
 
-    <h3>🔧 Thay đổi thông tin</h3>
+    <h3 style="text-align:center; margin-bottom:20px; font-size:1.4rem;">
+        🔧 Tùy chỉnh tài khoản
+    </h3>
 
-    <!-- Avatar -->
-    <form action="update_profile.php" method="POST" enctype="multipart/form-data" class="update-box">
-        <h4>🖼 Thay đổi Avatar</h4>
-        <input type="file" name="avatar" required>
-        <button type="submit" name="change_avatar">Cập Nhật Avatar</button>
-    </form>
+    <div class="update-grid">
 
-    <!-- Đổi tên -->
-    <form action="update_profile.php" method="POST" class="update-box">
-        <h4>✏️ Đổi tên ingame</h4>
-        <input type="text" name="new_name" placeholder="Tên mới" required>
-        <button type="submit" name="change_name">Cập Nhật Tên</button>
-    </form>
+        <!-- Avatar -->
+        <div class="update-card">
+            <div class="card-header">
+                <span class="card-icon">🖼️</span>
+                <span class="card-title">Thay đổi Avatar</span>
+            </div>
+            <form action="update_profile.php" method="POST" enctype="multipart/form-data">
+                <input type="file" name="avatar" class="input-file">
+                <button type="submit" name="change_avatar" class="btn-update-green">Cập nhật avatar</button>
+            </form>
+        </div>
 
-    <!-- Đổi mật khẩu -->
-    <form action="update_profile.php" method="POST" class="update-box">
-        <h4>🔑 Đổi mật khẩu</h4>
-        <input type="password" name="old_password" placeholder="Mật khẩu cũ" required>
-        <input type="password" name="new_password" placeholder="Mật khẩu mới" required>
-        <button type="submit" name="change_password">Đổi Mật Khẩu</button>
-    </form>
+        <!-- Đổi tên -->
+        <div class="update-card">
+            <div class="card-header">
+                <span class="card-icon">✏️</span>
+                <span class="card-title">Đổi tên ingame</span>
+            </div>
+            <form action="update_profile.php" method="POST">
+                <input type="text" name="new_name" class="input-text" placeholder="Nhập tên mới">
+                <button type="submit" name="change_name" class="btn-update-green">Cập nhật tên</button>
+            </form>
+        </div>
 
+        <!-- Đổi mật khẩu -->
+        <div class="update-card">
+            <div class="card-header">
+                <span class="card-icon">🔑</span>
+                <span class="card-title">Đổi mật khẩu</span>
+            </div>
+            <form action="update_profile.php" method="POST">
+                <input type="password" name="old_password" class="input-text" placeholder="Mật khẩu cũ">
+                <input type="password" name="new_password" class="input-text" placeholder="Mật khẩu mới">
+                <button type="submit" name="change_password" class="btn-update-green">Đổi mật khẩu</button>
+            </form>
+        </div>
+
+    </div>
 </div>
+
 
     <div class="profile-stats">
         <div class="stat-item">
@@ -550,6 +712,12 @@ $score_history_result = $stmt_score_history->get_result();
 <script>
 function toggleUpdateForm() {
     let f = document.getElementById("updateForm");
+    f.style.display = (f.style.display === "none" || f.style.display === "") ? "block" : "none";
+}
+</script>
+<script>
+function toggleBioForm() {
+    let f = document.getElementById("bioForm");
     f.style.display = (f.style.display === "none" || f.style.display === "") ? "block" : "none";
 }
 </script>
