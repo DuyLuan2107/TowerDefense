@@ -98,4 +98,24 @@ if (isset($_POST['change_password'])) {
     exit;
 }
 
+if (isset($_POST['change_bio'])) {
+    $new_bio = trim($_POST['new_bio']);
+
+    if (strlen($new_bio) > 500) {
+        $_SESSION['update_error'] = "Tiểu sử quá dài (tối đa 500 ký tự).";
+        header("Location: profile.php?open=1");
+        exit;
+    }
+
+    $stmt = $conn->prepare("UPDATE users SET bio = ? WHERE id = ?");
+    $stmt->bind_param("si", $new_bio, $_SESSION['user']['id']);
+    $stmt->execute();
+
+    $_SESSION['user']['bio'] = $new_bio;
+    header("Location: profile.php?open=1");
+    exit;
+}
+
+
+
 ?>
