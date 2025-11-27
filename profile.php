@@ -467,8 +467,19 @@ $score_history_result = $stmt_score_history->get_result();
     .btn-update-green:hover {
         background: #1f8b38;
     }
-    
+    .input-group {
+    position: relative;
+}
 
+    .toggle-password {
+        position: absolute;
+        right: 12px;
+        top: 40%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        font-size: 1.1rem;
+        user-select: none;
+    }
 
 </style>
 
@@ -524,13 +535,13 @@ $score_history_result = $stmt_score_history->get_result();
 
     <?php if (!empty($_SESSION['update_error'])): ?>
         <div class="alert error">
-            <?= $_SESSION['update_error']; unset($_SESSION['update_error']); ?>
+            <?= $_SESSION['update_error']; ?>
         </div>
     <?php endif; ?>
 
     <?php if (!empty($_SESSION['update_success'])): ?>
         <div class="alert success">
-            <?= $_SESSION['update_success']; unset($_SESSION['update_success']); ?>
+            <?= $_SESSION['update_success']; ?>
         </div>
     <?php endif; ?>
 
@@ -571,8 +582,18 @@ $score_history_result = $stmt_score_history->get_result();
                 <span class="card-title">Đổi mật khẩu</span>
             </div>
             <form action="update_profile.php" method="POST">
-                <input type="password" name="old_password" class="input-text" placeholder="Mật khẩu cũ">
-                <input type="password" name="new_password" class="input-text" placeholder="Mật khẩu mới">
+               <div class="input-group" style="margin-bottom: 12px;">
+                    <input type="password" id="old-pass" name="old_password"
+                        class="input-text password-input" placeholder="Mật khẩu cũ">
+                    <span class="toggle-password" onclick="showOldPass()">👁️</span>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 12px;">
+                    <input type="password" id="new-pass" name="new_password"
+                        class="input-text password-input" placeholder="Mật khẩu mới">
+                    <span class="toggle-password" onclick="showNewPass()">👁️</span>
+                </div>
+
                 <button type="submit" name="change_password" class="btn-update-green">Đổi mật khẩu</button>
             </form>
         </div>
@@ -677,6 +698,15 @@ $score_history_result = $stmt_score_history->get_result();
         </div>
     </div>
     </div>
+    <?php if (!empty($_SESSION['update_error']) || !empty($_SESSION['update_success'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tự mở phần cập nhật tài khoản
+        document.getElementById("updateForm").style.display = "block";
+    });
+    </script>
+    <?php endif; ?>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -708,6 +738,17 @@ $score_history_result = $stmt_score_history->get_result();
 </script>
 
 <?php include "includes/footer.php"; ?>
+<?php if (!empty($_SESSION['update_error']) || !empty($_SESSION['update_success'])): ?>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("updateForm").style.display = "block";
+});
+</script>
+<?php 
+    unset($_SESSION['update_error']);
+    unset($_SESSION['update_success']);
+endif; ?>
+
 
 <script>
 function toggleUpdateForm() {
@@ -719,5 +760,33 @@ function toggleUpdateForm() {
 function toggleBioForm() {
     let f = document.getElementById("bioForm");
     f.style.display = (f.style.display === "none" || f.style.display === "") ? "block" : "none";
+}
+
+</script>
+<script>
+function showOldPass() {
+    let input = document.getElementById("old-pass");
+    let icon = input.parentElement.querySelector(".toggle-password");
+
+    if (input.type === "password") {
+        input.type = "text";
+        icon.textContent = "🙈";
+    } else {
+        input.type = "password";
+        icon.textContent = "👁️";
+    }
+}
+
+function showNewPass() {
+    let input = document.getElementById("new-pass");
+    let icon = input.parentElement.querySelector(".toggle-password");
+
+    if (input.type === "password") {
+        input.type = "text";
+        icon.textContent = "🙈";
+    } else {
+        input.type = "password";
+        icon.textContent = "👁️";
+    }
 }
 </script>
