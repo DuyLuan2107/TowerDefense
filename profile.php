@@ -110,13 +110,14 @@ $posts_result = $stmt_posts->get_result();
 
 // TAB 2: Bình luận gần đây (MỚI)
 $stmt_comments = $conn->prepare("
-    SELECT c.content, c.created_at, p.id AS post_id, p.title AS post_title 
+    SELECT c.id AS comment_id, c.content, c.created_at, p.id AS post_id, p.title AS post_title 
     FROM comments c
     JOIN posts p ON c.post_id = p.id
     WHERE c.user_id = ? 
     ORDER BY c.created_at DESC 
     LIMIT 15
 ");
+
 $stmt_comments->bind_param("i", $user_id);
 $stmt_comments->execute();
 $comments_result = $stmt_comments->get_result();
@@ -655,7 +656,7 @@ $score_history_result = $stmt_score_history->get_result();
                                 <p class="comment-content">"<?= htmlspecialchars($c['content']) ?>"</p>
                                 <span class="comment-meta">
                                     Bình luận trong bài viết 
-                                    <a href="forum_view.php?id=<?= $c['post_id'] ?>">
+                                    <a href="forum_view.php?id=<?= $c['post_id'] ?>#comment-<?= $c['comment_id'] ?>">
                                         <?= htmlspecialchars($c['post_title']) ?>
                                     </a>
                                     • lúc <?= date("H:i, d/m/Y", strtotime($c['created_at'])) ?>

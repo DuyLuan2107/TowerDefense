@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
         // Giữ lại cách sắp xếp
         $sort_param = isset($_GET['sort']) ? '&sort=' . $_GET['sort'] : '';
         $order_param = isset($_GET['order']) ? '&order=' . $_GET['order'] : '';
-        header("Location: forum_view.php?id=".$post_id.$sort_param.$order_param);
+        header("Location: forum_view.php?id=".$post_id.$sort_param.$order_param . "#comment-" . $comment_id);
         exit;
     }
   }
@@ -269,7 +269,7 @@ function getParentComment($conn, $parent_id) {
             </script>
             <?php while ($c = $comments->fetch_assoc()):
                  $cid = $c['id'];  ?>
-                <div class="fb-comment">
+                <div class="fb-comment" id="comment-<?= $c['id'] ?>">
                     <a href="user_profile.php?id=<?= $c['user_id'] ?>">
                         <img class="avatar" src="<?= $c['author_avatar'] ?: 'uploads/avatar/default.png' ?>" alt="Avatar">
                     </a>
@@ -528,6 +528,56 @@ function likeComment(commentId) {
         }
     });
 }
+
+// Highlight comment từ fragment URL
+(function() {
+    function applyHighlightFromHash() {
+        var hash = location.hash;
+        if (!hash) return;
+        var m = hash.match(/^#comment-(\d+)$/);
+        if (!m) return;
+        var targetId = 'comment-' + m[1];
+
+        var tries = 0;
+        var maxTries = 60;
+        var interval = setInterval(function() {
+            var el = document.getElementById(targetId);
+            tries++;
+            if (el || tries >= maxTries) {
+                clearInterval(interval);
+                if (!el) return;
+
+                // Cuộn đến giữa màn hình
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Thêm class highlight
+                el.classList.add('highlight');
+
+                // Xóa fragment khỏi URL ngay sau khi đã cuộn (để reload sẽ không có #)
+                try {
+                    var newUrl = window.location.pathname + window.location.search;
+                    history.replaceState(null, '', newUrl);
+                } catch (e) {
+                    // nếu browser không hỗ trợ, bỏ qua
+                }
+
+                // Bỏ highlight sau 4s
+                setTimeout(function(){ el.classList.remove('highlight'); }, 4000);
+
+                // focus hỗ trợ bàn phím/ARIA
+                try { el.setAttribute('tabindex','-1'); el.focus({ preventScroll:true }); } catch(e){}
+            }
+        }, 100);
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        applyHighlightFromHash();
+    } else {
+        document.addEventListener('DOMContentLoaded', applyHighlightFromHash);
+    }
+
+    window.addEventListener('hashchange', applyHighlightFromHash);
+})();
 </script>
 
 <?php include 'includes/footer.php'; ?>
