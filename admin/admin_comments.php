@@ -127,9 +127,9 @@ $res = $stmt->get_result();
                     <td><?= $r['id'] ?></td>
                     <td><?= htmlspecialchars($r['user_name']) ?> (ID <?= $r['user_id'] ?>)</td>
                     <td>
-                        <a href="../forum_view.php?id=<?= $r['post_id'] ?>"
-                           style="color: var(--text); text-decoration: underline;">
-                            <?= htmlspecialchars($r['post_title']) ?>
+                        <a href="../forum_view.php?id=<?= $r['post_id'] ?>#comment-<?= $r['id'] ?>"
+                        style="color: var(--text); text-decoration: underline;">
+                            <?= htmlspecialchars($r['post_title']) ?> (Jump to comment #<?= $r['id'] ?>)
                         </a>
                     </td>
                     <td style="max-width: 300px; word-break: break-word;">
