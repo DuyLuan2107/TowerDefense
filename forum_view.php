@@ -307,10 +307,25 @@ function getParentComment($conn, $parent_id) {
                         
                         <p class="cmt-content" id="cmt_content_<?= $cid ?>"><?= htmlspecialchars($c['content']) ?></p>
 
-                            <div class="cmt-edit-inline" id="edit_box_<?= $cid ?>" style="display:none; margin-top:5px;">
-                                <textarea id="edit_text_<?= $cid ?>" rows="3" style="width:100%; padding:6px;resize: none"><?= htmlspecialchars($c['content']) ?></textarea>
-                                <button onclick="saveComment(<?= $cid ?>)" style="margin-right:5px;">💾 Lưu</button>
-                                <button onclick="cancelEdit(<?= $cid ?>)">Hủy</button>
+                            <div class="cmt-edit-inline" id="edit_box_<?= $cid ?>" style="display:none; margin-top:10px;">
+                                <div class="editor-box">
+                                    <div class="editor-toolbar">
+                                        <button type="button" class="tool-btn" data-cmd="bold" data-target="editEditor_<?= $cid ?>"><b>B</b></button>
+                                        <button type="button" class="tool-btn" data-cmd="italic" data-target="editEditor_<?= $cid ?>"><i>I</i></button>
+                                        <button type="button" class="tool-btn" data-cmd="underline" data-target="editEditor_<?= $cid ?>"><u>U</u></button>
+                                        <button type="button" class="tool-btn emojiBtn" data-target="editEditor_<?= $cid ?>">😊</button>
+                                    </div>
+
+                                    <!-- Ô contenteditable -->
+                                    <div id="editEditor_<?= $cid ?>" 
+                                        class="editor-area edit-editor" 
+                                        contenteditable="true"><?= htmlspecialchars($c['content']) ?></div>
+                                </div>
+
+                                <div style="margin-top:5px;">
+                                    <button onclick="saveComment(<?= $cid ?>)" class="send-btn">💾 Lưu</button>
+                                    <button onclick="cancelEdit(<?= $cid ?>)" class="send-btn" style="background:#777;">Hủy</button>
+                                </div>
                             </div>
 
                         <?php
@@ -361,25 +376,209 @@ function getParentComment($conn, $parent_id) {
 
             <?php if (isset($_SESSION['user'])): ?>
     <form class="fb-comment-form" method="post" enctype="multipart/form-data">
-        <img class="avatar" src="<?= htmlspecialchars($_SESSION['user']['avatar'] ?? 'uploads/avatar/default.png') ?>" alt="Avatar">
-        <div class="input-container">
-            <!-- Khung hiển thị bình luận được trả lời -->
-            <div id="reply-quote" style="display:none; background:#f0f2f5; border-left:4px solid #1877f2; padding:8px 12px; margin-bottom:8px; border-radius:4px; font-size:0.9em;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:#1877f2;">Trả lời: <span id="reply-author"></span></strong>
-                    <a href="javascript:void(0)" onclick="cancelReply()" style="color:#65676b; cursor:pointer; font-size:1.2em;">✕</a>
-                </div>
-                <div style="margin-top:5px; color:#555; font-style:italic;" id="reply-content"></div>
+    <img class="avatar" 
+         src="<?= htmlspecialchars($_SESSION['user']['avatar'] ?? 'uploads/avatar/default.png') ?>" 
+         alt="Avatar">
+
+    <div class="comment-editor-container">
+
+        <!-- Quote -->
+        <div id="reply-quote" class="reply-quote">
+            <div class="reply-header">
+                <strong>Trả lời: <span id="reply-author"></span></strong>
+                <span class="reply-close" onclick="cancelReply()">✕</span>
             </div>
-            <textarea name="content" rows="2" placeholder="Viết bình luận..." onkeydown="handleCommentKeypress(event)"></textarea>
-            <!-- Input ẩn để lưu ID bình luận được trả lời -->
-            <input type="hidden" id="parent-comment-id" name="parent_comment_id" value="">
-            <div class="controls">
-                <input type="file" name="comment_image" accept="image/*">
-                <button type="submit" name="comment">Gửi</button>
-            </div>
+            <div class="reply-text" id="reply-content"></div>
         </div>
-    </form>
+
+        <!-- COMMENT EDITOR (Giống editor bài viết) -->
+        <div class="editor-box">
+            <div class="editor-toolbar">
+                <button type="button" class="tool-btn" data-cmd="bold"><b>B</b></button>
+                <button type="button" class="tool-btn" data-cmd="italic"><i>I</i></button>
+                <button type="button" class="tool-btn" data-cmd="underline"><u>U</u></button>
+
+                <!-- emoji -->
+                <button type="button" class="tool-btn emojiBtn" data-target="commentEditor">😊</button>
+            </div>
+
+            <div id="commentEditor" class="editor-area" contenteditable="true"
+                 placeholder="Viết bình luận..."></div>
+        </div>
+
+        <!-- Hidden để submit text -->
+        <input type="hidden" name="content" id="comment-content-hidden">
+
+        <!-- Chọn file + gửi -->
+        <div class="controls">
+    <input type="file" name="comment_image" accept="image/*">
+    <button type="submit" name="comment">Gửi</button>
+</div>
+
+
+        <input type="hidden" id="parent-comment-id" name="parent_comment_id">
+    </div>
+</form>
+<style>
+    /* ---------- COMMENT EDITOR GIỐNG CREATE POST ---------- */
+.fb-comment-form .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fb-comment-form .controls button {
+    padding: 6px 15px;
+    border-radius: 18px;
+    border: none;
+    background-color: #1877f2;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.fb-comment-form .controls button:hover {
+    background-color: #145dbf;
+}
+
+.fb-comment-form {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.fb-comment-form .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.comment-editor-container {
+    flex: 1;
+}
+
+/* Reply quote */
+.reply-quote {
+    display: none;
+    background: #f0f2f5;
+    border-left: 4px solid #1877f2;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    font-size: 0.9em;
+}
+.reply-header {
+    display: flex;
+    justify-content: space-between;
+}
+.reply-close {
+    cursor: pointer;
+    font-size: 18px;
+}
+
+/* Editor box (giống create-post) */
+.editor-box {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.editor-toolbar {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+}
+
+.tool-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+.editor-area {
+    min-height: 80px;
+    outline: none;
+    padding: 12px 14px;
+    line-height: 1.4;
+    font-size: 15px;
+}
+
+/* Placeholder contenteditable */
+.editor-area:empty:before {
+    content: attr(placeholder);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+/* Controls */
+.comment-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-btn {
+    font-size: 20px;
+    cursor: pointer;
+}
+.file-btn input {
+    display: none;
+}
+
+.send-btn {
+    background: #1877f2;
+    color: #fff;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.send-btn:hover {
+    background: #145ecc;
+}
+
+/* Emoji panel */
+#emojiPanel {
+    position: fixed;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    padding: 8px;
+    border-radius: 8px;
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 220px;
+    z-index: 9999;
+}
+#emojiPanel span {
+    font-size: 20px;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 6px;
+}
+#emojiPanel span:hover {
+    background: #e2e8f0;
+}
+.edit-editor {
+    min-height: 70px;
+    padding: 10px;
+    font-size: 15px;
+    border: none;
+    outline: none;
+}
+
+
+</style>
+<!-- Emoji panel dùng chung -->
+<div id="emojiPanel"></div>
+
 <?php else: ?>
     <p style="color:#65676b;">Bạn cần <a href="auth.php">đăng nhập</a> để bình luận.</p>
 <?php endif; ?>
@@ -420,6 +619,11 @@ document.getElementById("shareBtn").onclick = function() {
 <script>
 // Bật chế độ sửa
 function editComment(id) {
+    const ed = document.getElementById("editEditor_" + id);
+editors["editEditor_" + id] = ed;
+
+// Lưu caret mặc định (cuối nội dung)
+setTimeout(() => saveCaretFor(ed), 50);
     document.getElementById("cmt_content_" + id).style.display = "none";
     document.getElementById("edit_box_" + id).style.display = "block";
 }
@@ -432,7 +636,8 @@ function cancelEdit(id) {
 
 // Lưu comment qua AJAX
 function saveComment(id) {
-    const newContent = document.getElementById("edit_text_" + id).value.trim();
+    const newContent = document.getElementById("editEditor_" + id).innerHTML.trim();
+
     if (newContent === "") {
         alert("Nội dung không được để trống.");
         return;
@@ -450,10 +655,14 @@ function saveComment(id) {
             return;
         }
 
+        // cập nhật vào giao diện
         document.getElementById("cmt_content_" + id).innerHTML = d.content;
+
+        // tắt khung sửa
         cancelEdit(id);
     });
 }
+
 
 // Trả lời bình luận
 function replyComment(commentId, authorName) {
@@ -578,6 +787,182 @@ function likeComment(commentId) {
 
     window.addEventListener('hashchange', applyHighlightFromHash);
 })();
+
+
+// map editors by id
+const editors = {
+    commentEditor: document.getElementById("commentEditor"),
+    titleEditor: document.getElementById("titleEditor"),      // nếu có
+    contentEditor: document.getElementById("contentEditor")   // nếu có
+};
+
+// saved range per editor id (store cloned ranges)
+const savedRanges = {};
+
+// helper: save current caret range for an editor (cloneRange)
+function saveCaretFor(editor) {
+    try {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0).cloneRange();
+        savedRanges[editor.id] = range;
+    } catch (e) {
+        // ignore
+    }
+}
+
+// helper: restore saved caret for editor (use cloneRange to avoid mutations)
+function restoreCaretFor(editor) {
+    try {
+        const range = savedRanges[editor.id];
+        if (!range) {
+            // If no saved range, move caret to end
+            editor.focus();
+            const r = document.createRange();
+            r.selectNodeContents(editor);
+            r.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(r);
+            return;
+        }
+        editor.focus();
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range.cloneRange());
+    } catch (e) {
+        // ignore
+    }
+}
+
+// Attach events to maintain "active editor" and save caret frequently
+Object.values(editors).forEach(ed => {
+    if (!ed) return;
+    // Save on user actions inside editor
+    ed.addEventListener('keyup', () => saveCaretFor(ed));
+    ed.addEventListener('mouseup', () => saveCaretFor(ed));
+    ed.addEventListener('focus', () => saveCaretFor(ed));
+    ed.addEventListener('click', () => saveCaretFor(ed));
+    // Also save when user presses keys that move caret
+    ed.addEventListener('keydown', (ev) => {
+        // small delay for some browsers
+        setTimeout(() => saveCaretFor(ed), 0);
+    });
+});
+
+// Prevent toolbar buttons stealing focus: listen mousedown on toolbar buttons and save caret **before** click
+document.querySelectorAll('.tool-btn, .emojiBtn').forEach(btn => {
+    btn.addEventListener('mousedown', (ev) => {
+        // find focused editor (where selection currently is)
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount) {
+            // try to detect editor containing caret
+            const container = sel.getRangeAt(0).commonAncestorContainer;
+            const editorEl = container.nodeType === 1 ? container.closest('.editor-area') : container.parentElement.closest('.editor-area');
+            if (editorEl) saveCaretFor(editorEl);
+        }
+        // prevent the button from taking focus (optional)
+        ev.preventDefault();
+    });
+});
+
+// FORMAT buttons (B/I/U) using execCommand after restore
+document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+        // determine which editor we saved for (prefer active by savedRanges)
+        // find editor which has savedRange recently
+        let targetEditor = null;
+        // If the button has data-target, prefer it (some toolbar buttons do)
+        if (btn.dataset && btn.dataset.target) {
+            targetEditor = document.getElementById(btn.dataset.target);
+        } else {
+            // fallback: choose any editor that has saved range
+            for (let id in savedRanges) {
+                if (savedRanges[id]) { targetEditor = document.getElementById(id); break; }
+            }
+        }
+        if (!targetEditor) return;
+        restoreCaretFor(targetEditor);
+        document.execCommand(btn.dataset.cmd, false, null);
+        // after executing, update saved range
+        saveCaretFor(targetEditor);
+    });
+});
+
+/* ============================
+   EMOJI PANEL (insert at caret)
+   ============================ */
+
+const emojiPanel = document.getElementById("emojiPanel");
+const emojis = ["😀","😁","😂","🤣","😎","😍","🤔","😡","😭","👍","🔥","💯","🤯","🤝","🎮"];
+
+// render emojis
+emojiPanel.innerHTML = "";
+emojis.forEach(e => {
+    const s = document.createElement('span');
+    s.textContent = e;
+    s.setAttribute('role','button');
+    s.style.cursor = 'pointer';
+    s.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        // try find the target editor by checking last savedRange keys
+        // if emoji button had data-target, use that editor
+        const targetId = emojiPanel.dataset.targetId;
+        const targetEditor = targetId ? document.getElementById(targetId) : (document.getElementById('commentEditor') || null);
+        if (targetEditor) {
+            restoreCaretFor(targetEditor);
+            // insert text at caret using execCommand (safe)
+            document.execCommand('insertText', false, e);
+            // update saved range
+            saveCaretFor(targetEditor);
+        }
+        emojiPanel.style.display = 'none';
+    });
+    emojiPanel.appendChild(s);
+});
+
+// When clicking emojiBtn: save caret (handled by mousedown above), position panel and mark target
+document.querySelectorAll('.emojiBtn').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const targetId = btn.dataset.target;
+        emojiPanel.dataset.targetId = targetId || 'commentEditor';
+
+        // position near button but ensure inside viewport
+        const rect = btn.getBoundingClientRect();
+        const left = Math.max(8, rect.left);
+        let top = rect.bottom + 6;
+        // if not enough space below, show above
+        if (top + 260 > (window.innerHeight || document.documentElement.clientHeight)) {
+            top = rect.top - 6 - 260; // approximate height
+        }
+        emojiPanel.style.left = `${left}px`;
+        emojiPanel.style.top = `${top}px`;
+        emojiPanel.style.display = 'flex';
+    });
+});
+
+// click outside hide panel
+document.addEventListener('click', () => { emojiPanel.style.display = 'none'; });
+
+// prevent panel click from closing
+emojiPanel.addEventListener('click', e => e.stopPropagation());
+
+/* ============================
+   SUBMIT COMMENT -> send HTML/plain
+   ============================ */
+
+const commentForm = document.querySelector('.fb-comment-form');
+if (commentForm) {
+    commentForm.addEventListener('submit', (ev) => {
+        // get HTML from editor, but you might want plain text:
+        const html = (document.getElementById('commentEditor') || { innerHTML: '' }).innerHTML.trim();
+        document.getElementById('comment-content-hidden').value = html;
+        // allow submit to continue
+    });
+}
+
+
 </script>
 
 <?php include 'includes/footer.php'; ?>
