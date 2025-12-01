@@ -294,12 +294,32 @@ function getParentComment($conn, $parent_id) {
                         ?>
                             <?php if ($parent): ?>
                                 <div style="background:#f0f2f5; border-left:4px solid #1877f2; padding:8px 12px; margin:8px 0; border-radius:4px; font-size:0.85em;">
-                                    <strong style="color:#1877f2;">Trả lời: <?= htmlspecialchars($parent['name']) ?></strong>
-                                    <p style="margin:5px 0 0 0; color:#555;"><?= htmlspecialchars(substr($parent['content'], 0, 100)) ?><?= strlen($parent['content']) > 100 ? '...' : '' ?></p>
+                                    <strong style="color:#1877f2;">                                       
+                                        <a href="#comment-<?= (int)$parent['id'] ?>"
+                                        style="color:#1877f2; text-decoration:underline;"
+                                        class="jump-to-parent">
+                                        Trả lời: <?= htmlspecialchars($parent['name']) ?>
+                                        </a>
+                                    </strong>
+
+                                    <p style="margin:5px 0 0 0; color:#555;">
+                                        <?= htmlspecialchars(substr($parent['content'], 0, 100)) ?>
+                                        <?= strlen($parent['content']) > 100 ? '...' : '' ?>
+                                    </p>
+
+                                    <?php
+                                        // kiểm tra ảnh của bình luận gốc
+                                        $parent_img = $conn->query("SELECT image_path FROM comment_images WHERE comment_id = " . (int)$parent['id'])->fetch_assoc();
+                                        if (!empty($parent_img['image_path'])):
+                                    ?>
+                                        <div style="margin:5px 0 0 0; color:#999; font-style:italic;">
+                                            Tệp đính kèm
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             <?php else: ?>
                                 <div style="background:#f5f5f5; border-left:4px solid #999; padding:8px 12px; margin:8px 0; border-radius:4px; font-size:0.85em;">
-                                    <strong style="color:#999;">Trả lời: Bình luận gốc đã bị xóa</strong>
+                                    <strong style="color:#999;">Bình luận gốc đã bị xóa</strong>
                                     <p style="margin:5px 0 0 0; color:#999; font-style:italic;">Nội dung không còn tồn tại</p>
                                 </div>
                             <?php endif; ?>
@@ -307,26 +327,16 @@ function getParentComment($conn, $parent_id) {
                         
                         <p class="cmt-content" id="cmt_content_<?= $cid ?>"><?= htmlspecialchars($c['content']) ?></p>
 
-                            <div class="cmt-edit-inline" id="edit_box_<?= $cid ?>" style="display:none; margin-top:10px;">
-                                <div class="editor-box">
-                                    <div class="editor-toolbar">
-                                        <button type="button" class="tool-btn" data-cmd="bold" data-target="editEditor_<?= $cid ?>"><b>B</b></button>
-                                        <button type="button" class="tool-btn" data-cmd="italic" data-target="editEditor_<?= $cid ?>"><i>I</i></button>
-                                        <button type="button" class="tool-btn" data-cmd="underline" data-target="editEditor_<?= $cid ?>"><u>U</u></button>
-                                        <button type="button" class="tool-btn emojiBtn" data-target="editEditor_<?= $cid ?>">😊</button>
-                                    </div>
+                            <div class="cmt-edit-inline" id="edit_box_<?= $cid ?>" style="display:none; margin-top:5px;width:98%;">
+                                <textarea id="edit_text_<?= $cid ?>" rows="3" style="width:100%; padding:6px;resize: none"><?= htmlspecialchars($c['content']) ?></textarea>
 
-                                    <!-- Ô contenteditable -->
-                                    <div id="editEditor_<?= $cid ?>" 
-                                        class="editor-area edit-editor" 
-                                        contenteditable="true"><?= htmlspecialchars($c['content']) ?></div>
-                                </div>
-
-                                <div style="margin-top:5px;">
-                                    <button onclick="saveComment(<?= $cid ?>)" class="send-btn">💾 Lưu</button>
-                                    <button onclick="cancelEdit(<?= $cid ?>)" class="send-btn" style="background:#777;">Hủy</button>
+                                <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                                    <button type="button" class="edit-emoji-btn" data-cid="<?= $cid ?>" title="Chèn emoji" style="background:none; border:1px solid #e6e6e6; padding:6px 8px; border-radius:8px; cursor:pointer; font-size:18px;">😃</button>
+                                    <button onclick="saveComment(<?= $cid ?>)" style="margin-left:auto; padding:6px 10px; border-radius:6px; border:none; background:#28a745; color:#fff; cursor:pointer;">💾 Lưu</button>
+                                    <button onclick="cancelEdit(<?= $cid ?>)" style="padding:6px 10px; border-radius:6px; border:1px solid #ccc; background:#fff; cursor:pointer;">Hủy</button>
                                 </div>
                             </div>
+
 
                         <?php
                         $cid = $c['id'];
@@ -375,218 +385,98 @@ function getParentComment($conn, $parent_id) {
             <?php endwhile; ?>
 
             <?php if (isset($_SESSION['user'])): ?>
-    <form class="fb-comment-form" method="post" enctype="multipart/form-data">
-    <img class="avatar" 
-         src="<?= htmlspecialchars($_SESSION['user']['avatar'] ?? 'uploads/avatar/default.png') ?>" 
-         alt="Avatar">
+<form class="fb-comment-form" method="post" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:flex-start;">
+    <img class="avatar" src="<?= htmlspecialchars($_SESSION['user']['avatar'] ?? 'uploads/avatar/default.png') ?>" alt="Avatar" style="width:40px; height:40px; border-radius:50%;">
 
-    <div class="comment-editor-container">
-
-        <!-- Quote -->
-        <div id="reply-quote" class="reply-quote">
-            <div class="reply-header">
-                <strong>Trả lời: <span id="reply-author"></span></strong>
-                <span class="reply-close" onclick="cancelReply()">✕</span>
+    <div style="flex:1; position:relative;">
+        <div id="reply-quote" style="display:none; background:#f0f2f5; border-left:4px solid #1877f2; padding:8px 12px; margin-bottom:8px; border-radius:4px; font-size:0.9em;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color:#1877f2;">Trả lời: <span id="reply-author"></span></strong>
+                <a href="javascript:void(0)" onclick="cancelReply()" style="color:#65676b; cursor:pointer; font-size:1.2em;">✕</a>
             </div>
-            <div class="reply-text" id="reply-content"></div>
+            <div style="margin-top:5px; color:#555; font-style:italic;" id="reply-content"></div>
         </div>
 
-        <!-- COMMENT EDITOR (Giống editor bài viết) -->
-        <div class="editor-box">
-            <div class="editor-toolbar">
-                <button type="button" class="tool-btn" data-cmd="bold"><b>B</b></button>
-                <button type="button" class="tool-btn" data-cmd="italic"><i>I</i></button>
-                <button type="button" class="tool-btn" data-cmd="underline"><u>U</u></button>
+        <textarea id="mainCommentInput" name="content" rows="2" placeholder="Viết bình luận..." onkeydown="handleCommentKeypress(event)"
+                  style="width:100%; padding:10px; border:1px solid #dcdfe6; border-radius:8px; resize:vertical; min-height:56px;"></textarea>
 
-                <!-- emoji -->
-                <button type="button" class="tool-btn emojiBtn" data-target="commentEditor">😊</button>
+
+                <!-- preview container (ẩn mặc định) -->
+                <div id="commentImagePreviewWrap" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+                    <img id="commentImagePreview" src="" alt="Preview" style="max-width:120px; max-height:90px; border-radius:8px; border:1px solid #e6e6e6; object-fit:cover;">
+                    <button type="button" id="removeCommentImageBtn" style="background:#fff; border:1px solid #d9534f; color:#d9534f; padding:6px 8px; border-radius:8px; cursor:pointer;">Xóa</button>
+                </div>
+                  <!-- controls ở phải: đặt position relative ở cha để emojiPicker căn theo -->
+        <div class="controls" style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:8px; position:relative;">
+            <div style="flex:1;"></div>
+
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+                <!-- emoji picker container (ẩn mặc định) -->
+                <div id="emojiPicker" class="emoji-picker-container" style="display:none; position:absolute; z-index:1001;"></div>
+
+                <!-- nút và input file (theo hàng dọc) -->
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="button" id="emojiToggleBtn" class="emoji-toggle-btn" title="Chèn biểu tượng cảm xúc" aria-label="Emoji"
+                            style="background:none; border:1px solid #e6e6e6; padding:6px 8px; border-radius:8px; cursor:pointer; font-size:18px;">😃</button>
+
+                    <!-- IMAGE INPUT + PREVIEW -->
+                    <label id="fileLabel" title="Đính kèm ảnh" style="cursor:pointer; border:1px solid #e6e6e6; padding:6px 8px; border-radius:8px; display:flex; align-items:center; gap:8px;">
+                        🖼️
+                        <input id="commentImageInput" type="file" name="comment_image" accept="image/*" style="display:none;">
+                    </label>
+
+                    
+
+                    <button type="submit" name="comment" id="sendCommentBtn" class="send-btn" style="padding:8px 14px; border-radius:18px; border:none; background:#1877f2; color:#fff; cursor:pointer;">
+                        Gửi
+                    </button>
+                </div>
             </div>
-
-            <div id="commentEditor" class="editor-area" contenteditable="true"
-                 placeholder="Viết bình luận..."></div>
         </div>
-
-        <!-- Hidden để submit text -->
-        <input type="hidden" name="content" id="comment-content-hidden">
-
-        <!-- Chọn file + gửi -->
-        <div class="controls">
-    <input type="file" name="comment_image" accept="image/*">
-    <button type="submit" name="comment">Gửi</button>
-</div>
-
-
-        <input type="hidden" id="parent-comment-id" name="parent_comment_id">
+        <input type="hidden" id="parent-comment-id" name="parent_comment_id" value="">
     </div>
 </form>
-<style>
-    /* ---------- COMMENT EDITOR GIỐNG CREATE POST ---------- */
-.fb-comment-form .controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.fb-comment-form .controls button {
-    padding: 6px 15px;
-    border-radius: 18px;
-    border: none;
-    background-color: #1877f2;
-    color: #fff;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.2s;
-}
-
-.fb-comment-form .controls button:hover {
-    background-color: #145dbf;
-}
-
-.fb-comment-form {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.fb-comment-form .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-}
-
-.comment-editor-container {
-    flex: 1;
-}
-
-/* Reply quote */
-.reply-quote {
-    display: none;
-    background: #f0f2f5;
-    border-left: 4px solid #1877f2;
-    padding: 8px 12px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    font-size: 0.9em;
-}
-.reply-header {
-    display: flex;
-    justify-content: space-between;
-}
-.reply-close {
-    cursor: pointer;
-    font-size: 18px;
-}
-
-/* Editor box (giống create-post) */
-.editor-box {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    overflow: hidden;
-}
-
-.editor-toolbar {
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 8px;
-    display: flex;
-    gap: 8px;
-}
-
-.tool-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 6px 10px;
-    border-radius: 6px;
-}
-
-.editor-area {
-    min-height: 80px;
-    outline: none;
-    padding: 12px 14px;
-    line-height: 1.4;
-    font-size: 15px;
-}
-
-/* Placeholder contenteditable */
-.editor-area:empty:before {
-    content: attr(placeholder);
-    color: #94a3b8;
-    pointer-events: none;
-}
-
-/* Controls */
-.comment-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.file-btn {
-    font-size: 20px;
-    cursor: pointer;
-}
-.file-btn input {
-    display: none;
-}
-
-.send-btn {
-    background: #1877f2;
-    color: #fff;
-    border: none;
-    padding: 7px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-.send-btn:hover {
-    background: #145ecc;
-}
-
-/* Emoji panel */
-#emojiPanel {
-    position: fixed;
-    background: #fff;
-    border: 1px solid #cbd5e1;
-    padding: 8px;
-    border-radius: 8px;
-    display: none;
-    flex-wrap: wrap;
-    gap: 6px;
-    width: 220px;
-    z-index: 9999;
-}
-#emojiPanel span {
-    font-size: 20px;
-    padding: 6px;
-    cursor: pointer;
-    border-radius: 6px;
-}
-#emojiPanel span:hover {
-    background: #e2e8f0;
-}
-.edit-editor {
-    min-height: 70px;
-    padding: 10px;
-    font-size: 15px;
-    border: none;
-    outline: none;
-}
-
-
-</style>
-<!-- Emoji panel dùng chung -->
-<div id="emojiPanel"></div>
-
 <?php else: ?>
     <p style="color:#65676b;">Bạn cần <a href="auth.php">đăng nhập</a> để bình luận.</p>
 <?php endif; ?>
 
+
         </div>
     </div>
     </div>
 </div>
+
+<style>
+/* emoji picker */
+.emoji-picker-container {
+    background:#fff;
+    border:1px solid #ddd;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+    border-radius:8px;
+    width:350px;
+    padding:2px;
+}
+.emoji-grid {
+    display:grid;
+    grid-template-columns:repeat(8, 1fr);
+    gap:6px;
+    max-height:220px;
+    overflow:auto;
+}
+.emoji-item {
+    cursor:pointer;
+    font-size:18px;
+    text-align:center;
+    padding:6px;
+    border-radius:6px;
+}
+.emoji-item:hover { background:#f0f2f5; }
+.fb-comment.highlight {
+    outline: 2px solid -webkit-focus-ring-color;
+    outline-offset: 2px;
+}
+
+</style>
 
 <script>
 // Like button
@@ -619,11 +509,6 @@ document.getElementById("shareBtn").onclick = function() {
 <script>
 // Bật chế độ sửa
 function editComment(id) {
-    const ed = document.getElementById("editEditor_" + id);
-editors["editEditor_" + id] = ed;
-
-// Lưu caret mặc định (cuối nội dung)
-setTimeout(() => saveCaretFor(ed), 50);
     document.getElementById("cmt_content_" + id).style.display = "none";
     document.getElementById("edit_box_" + id).style.display = "block";
 }
@@ -636,8 +521,7 @@ function cancelEdit(id) {
 
 // Lưu comment qua AJAX
 function saveComment(id) {
-    const newContent = document.getElementById("editEditor_" + id).innerHTML.trim();
-
+    const newContent = document.getElementById("edit_text_" + id).value.trim();
     if (newContent === "") {
         alert("Nội dung không được để trống.");
         return;
@@ -655,14 +539,10 @@ function saveComment(id) {
             return;
         }
 
-        // cập nhật vào giao diện
         document.getElementById("cmt_content_" + id).innerHTML = d.content;
-
-        // tắt khung sửa
         cancelEdit(id);
     });
 }
-
 
 // Trả lời bình luận
 function replyComment(commentId, authorName) {
@@ -788,181 +668,342 @@ function likeComment(commentId) {
     window.addEventListener('hashchange', applyHighlightFromHash);
 })();
 
+document.addEventListener('DOMContentLoaded', function() {
+    const commonEmojis = ["😀","😁","😂","🤣","😎","😍","🤔","😡","😭","👍","🔥","💯","🤯","🤝","🎮","😉","🙂","🙃","😅","🙏","👏","🤩","😴","🤖","🎉"];
 
-// map editors by id
-const editors = {
-    commentEditor: document.getElementById("commentEditor"),
-    titleEditor: document.getElementById("titleEditor"),      // nếu có
-    contentEditor: document.getElementById("contentEditor")   // nếu có
-};
+    const picker = document.getElementById('emojiPicker');
+    const btn = document.getElementById('emojiToggleBtn');
+    const ta = document.getElementById('mainCommentInput');
 
-// saved range per editor id (store cloned ranges)
-const savedRanges = {};
+    if (!picker || !btn || !ta) return;
 
-// helper: save current caret range for an editor (cloneRange)
-function saveCaretFor(editor) {
-    try {
-        const sel = window.getSelection();
-        if (!sel || sel.rangeCount === 0) return;
-        const range = sel.getRangeAt(0).cloneRange();
-        savedRanges[editor.id] = range;
-    } catch (e) {
-        // ignore
+    // ensure picker is direct child of body to avoid parent overflow issues
+    if (picker.parentElement !== document.body) {
+        document.body.appendChild(picker);
     }
-}
 
-// helper: restore saved caret for editor (use cloneRange to avoid mutations)
-function restoreCaretFor(editor) {
-    try {
-        const range = savedRanges[editor.id];
-        if (!range) {
-            // If no saved range, move caret to end
-            editor.focus();
-            const r = document.createRange();
-            r.selectNodeContents(editor);
-            r.collapse(false);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(r);
+    // style safety
+    picker.style.position = 'fixed';
+    picker.style.zIndex = 99999;
+    picker.style.display = 'none';
+
+    // render emoji grid
+    function renderEmojiGrid() {
+        picker.innerHTML = '';
+        const grid = document.createElement('div');
+        grid.className = 'emoji-grid';
+        commonEmojis.forEach(e => {
+            const d = document.createElement('div');
+            d.className = 'emoji-item';
+            d.textContent = e;
+            d.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                insertEmojiAtCursor(e);
+                hideEmojiPicker();
+                ta.focus();
+            });
+            grid.appendChild(d);
+        });
+        picker.appendChild(grid);
+    }
+
+    function insertEmojiAtCursor(emoji) {
+        const start = ta.selectionStart ?? ta.value.length;
+        const end = ta.selectionEnd ?? ta.value.length;
+        const before = ta.value.slice(0, start);
+        const after = ta.value.slice(end);
+        ta.value = before + emoji + after;
+        const pos = start + emoji.length;
+        ta.selectionStart = ta.selectionEnd = pos;
+        ta.dispatchEvent(new Event('input'));
+    }
+
+    function showEmojiPicker() {
+        renderEmojiGrid();
+        // đo kích thước picker sau khi render (display:block tạm)
+        picker.style.display = 'block';
+        picker.style.left = '0px'; picker.style.top = '0px';
+        const pickerRect = picker.getBoundingClientRect();
+        const btnRect = btn.getBoundingClientRect();
+
+        // right-align trên nút
+        let left = btnRect.right - pickerRect.width;
+        if (left < 8) left = Math.max(8, btnRect.left); // tránh trôi sang trái quá
+        // muốn hiển thị trên nút
+        let top = btnRect.top - pickerRect.height - 8;
+        // nếu không đủ chỗ trên viewport, show phía dưới nút
+        if (top < 8) top = btnRect.bottom + 8;
+
+        // đặt tọa độ fixed (viewport) — không cần scroll offset vì fixed
+        picker.style.left = Math.round(left) + 'px';
+        picker.style.top = Math.round(top) + 'px';
+        picker.style.display = 'block';
+    }
+
+    function hideEmojiPicker() {
+        picker.style.display = 'none';
+    }
+
+    function toggleEmojiPicker(e) {
+        e.stopPropagation();
+        if (picker.style.display === 'block') hideEmojiPicker();
+        else showEmojiPicker();
+    }
+
+    btn.addEventListener('click', toggleEmojiPicker);
+
+    // đóng khi click ngoài (body)
+    document.addEventListener('click', function(ev) {
+        if (!picker.contains(ev.target) && !btn.contains(ev.target)) hideEmojiPicker();
+    });
+
+    // tránh đóng khi click trong picker
+    picker.addEventListener('click', function(ev){ ev.stopPropagation(); });
+
+    // init once
+    renderEmojiGrid();
+});
+// Image preview + remove
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('commentImageInput');
+    const previewWrap = document.getElementById('commentImagePreviewWrap');
+    const previewImg = document.getElementById('commentImagePreview');
+    const removeBtn = document.getElementById('removeCommentImageBtn');
+    const fileLabel = document.getElementById('fileLabel');
+
+    let currentObjectUrl = null;
+
+    // khi click label => mở file dialog
+    fileLabel.addEventListener('click', function(e) {
+        // allow clicking label itself to open input
+        fileInput.click();
+    });
+
+    // file changed
+    fileInput.addEventListener('change', function(e) {
+        const f = fileInput.files && fileInput.files[0];
+        if (!f) {
+            hidePreview();
             return;
         }
-        editor.focus();
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range.cloneRange());
-    } catch (e) {
-        // ignore
+        // chỉ chấp nhận ảnh
+        if (!f.type.startsWith('image/')) {
+            alert('Vui lòng chọn file hình ảnh.');
+            fileInput.value = '';
+            hidePreview();
+            return;
+        }
+
+        // giải phóng object url cũ
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = null;
+        }
+
+        currentObjectUrl = URL.createObjectURL(f);
+        previewImg.src = currentObjectUrl;
+        previewWrap.style.display = 'flex';
+    });
+
+    // xóa ảnh đã chọn
+    removeBtn.addEventListener('click', function() {
+        fileInput.value = ''; // clear file input
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = null;
+        }
+        hidePreview();
+    });
+
+    function hidePreview() {
+        previewImg.src = '';
+        previewWrap.style.display = 'none';
+    }
+
+    // khi submit form, nếu muốn có validate kích thước / loại có thể thêm ở đây
+    // ví dụ: fileInput.files[0].size ...
+});
+
+// ---------- Hỗ trợ emoji chung (danh sách nhỏ) ----------
+const simpleEmojiList = ["😀","😁","😂","🤣","😎","😍","🤔","😡","😭","👍","🔥","💯","🤯","🎉"];
+
+// Mở hộp sửa
+function editComment(id) {
+    // ẩn nội dung hiển thị, hiện khung edit
+    document.getElementById("cmt_content_" + id).style.display = "none";
+    const editBox = document.getElementById("edit_box_" + id);
+    editBox.style.display = "block";
+
+    // emoji button behavior
+    const emojiBtn = editBox.querySelector('.edit-emoji-btn');
+    if (emojiBtn && !emojiBtn._hasListener) {
+        emojiBtn.addEventListener('click', function(e){
+            e.stopPropagation();
+            const cid = this.dataset.cid;
+            openSmallEmojiPickerForEdit(cid, this);
+        });
+        emojiBtn._hasListener = true;
     }
 }
 
-// Attach events to maintain "active editor" and save caret frequently
-Object.values(editors).forEach(ed => {
-    if (!ed) return;
-    // Save on user actions inside editor
-    ed.addEventListener('keyup', () => saveCaretFor(ed));
-    ed.addEventListener('mouseup', () => saveCaretFor(ed));
-    ed.addEventListener('focus', () => saveCaretFor(ed));
-    ed.addEventListener('click', () => saveCaretFor(ed));
-    // Also save when user presses keys that move caret
-    ed.addEventListener('keydown', (ev) => {
-        // small delay for some browsers
-        setTimeout(() => saveCaretFor(ed), 0);
-    });
-});
+// Hủy sửa (giữ nguyên nội dung hiển thị)
+function cancelEdit(id) {
+    const editBox = document.getElementById("edit_box_" + id);
+    if (editBox) {
+        editBox.style.display = "none";
+        editBox._removeImage = false;
+    }
+    const contentEl = document.getElementById("cmt_content_" + id);
+    if (contentEl) contentEl.style.display = "block";
+}
 
-// Prevent toolbar buttons stealing focus: listen mousedown on toolbar buttons and save caret **before** click
-document.querySelectorAll('.tool-btn, .emojiBtn').forEach(btn => {
-    btn.addEventListener('mousedown', (ev) => {
-        // find focused editor (where selection currently is)
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount) {
-            // try to detect editor containing caret
-            const container = sel.getRangeAt(0).commonAncestorContainer;
-            const editorEl = container.nodeType === 1 ? container.closest('.editor-area') : container.parentElement.closest('.editor-area');
-            if (editorEl) saveCaretFor(editorEl);
+// save via AJAX (FormData) - sẽ gửi file nếu có
+function saveComment(id) {
+    const textarea = document.getElementById('edit_text_' + id);
+    if (!textarea) return alert('Không tìm thấy vùng nhập.');
+    const content = textarea.value.trim();
+    const editBox = document.getElementById('edit_box_' + id);
+    const fileInput = document.getElementById('editImageInput_' + id);
+
+    if (content === '' && (!fileInput || !fileInput.files || fileInput.files.length === 0) && !editBox._removeImage) {
+        return alert('Nội dung không được để trống.');
+    }
+
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('content', content);
+    // nếu user đã chọn file
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        fd.append('comment_image', fileInput.files[0]);
+    }
+    // nếu user đã bấm xóa ảnh cũ
+    if (editBox._removeImage) {
+        fd.append('remove_image', '1');
+    }
+
+    fetch('comment_edit.php', {
+        method: 'POST',
+        body: fd
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.error) return alert('Lỗi: ' + (d.error || 'Không xác định'));
+        // Cập nhật nội dung hiển thị
+        const contentEl = document.getElementById('cmt_content_' + id);
+        if (contentEl) {
+            // server trả về d.content (đã escape/format nếu cần)
+            contentEl.innerHTML = d.content_html ?? d.content ?? content;
+            contentEl.style.display = 'block';
         }
-        // prevent the button from taking focus (optional)
-        ev.preventDefault();
-    });
-});
 
-// FORMAT buttons (B/I/U) using execCommand after restore
-document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
-    btn.addEventListener('click', (ev) => {
-        // determine which editor we saved for (prefer active by savedRanges)
-        // find editor which has savedRange recently
-        let targetEditor = null;
-        // If the button has data-target, prefer it (some toolbar buttons do)
-        if (btn.dataset && btn.dataset.target) {
-            targetEditor = document.getElementById(btn.dataset.target);
-        } else {
-            // fallback: choose any editor that has saved range
-            for (let id in savedRanges) {
-                if (savedRanges[id]) { targetEditor = document.getElementById(id); break; }
+        // cập nhật/hiển thị ảnh trong comment nếu server trả về image_path
+        if (d.image_path) {
+            // nếu đã có img thì thay src, ngược lại chèn img mới
+            const commentEl = document.getElementById('comment-' + id);
+            if (commentEl) {
+                let imgEl = commentEl.querySelector('.comment-img-auto');
+                if (!imgEl) {
+                    imgEl = document.createElement('img');
+                    imgEl.className = 'comment-img-auto';
+                    imgEl.style.maxWidth = '100%';
+                    imgEl.style.marginTop = '5px';
+                    imgEl.style.borderRadius = '8px';
+                    commentEl.querySelector('.content').appendChild(imgEl);
+                }
+                imgEl.src = d.image_path;
+            }
+        } else if (d.removed_image) {
+            // server xác nhận ảnh đã bị xóa -> remove img element nếu có
+            const commentEl = document.getElementById('comment-' + id);
+            if (commentEl) {
+                const imgEl = commentEl.querySelector('.comment-img-auto');
+                if (imgEl) imgEl.remove();
             }
         }
-        if (!targetEditor) return;
-        restoreCaretFor(targetEditor);
-        document.execCommand(btn.dataset.cmd, false, null);
-        // after executing, update saved range
-        saveCaretFor(targetEditor);
-    });
-});
 
-/* ============================
-   EMOJI PANEL (insert at caret)
-   ============================ */
-
-const emojiPanel = document.getElementById("emojiPanel");
-const emojis = ["😀","😁","😂","🤣","😎","😍","🤔","😡","😭","👍","🔥","💯","🤯","🤝","🎮"];
-
-// render emojis
-emojiPanel.innerHTML = "";
-emojis.forEach(e => {
-    const s = document.createElement('span');
-    s.textContent = e;
-    s.setAttribute('role','button');
-    s.style.cursor = 'pointer';
-    s.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        // try find the target editor by checking last savedRange keys
-        // if emoji button had data-target, use that editor
-        const targetId = emojiPanel.dataset.targetId;
-        const targetEditor = targetId ? document.getElementById(targetId) : (document.getElementById('commentEditor') || null);
-        if (targetEditor) {
-            restoreCaretFor(targetEditor);
-            // insert text at caret using execCommand (safe)
-            document.execCommand('insertText', false, e);
-            // update saved range
-            saveCaretFor(targetEditor);
+        // đóng edit box
+        editBox.style.display = 'none';
+        // revoke objectURL nếu có
+        if (fileInput && fileInput._objectUrl) {
+            URL.revokeObjectURL(fileInput._objectUrl);
+            fileInput._objectUrl = null;
         }
-        emojiPanel.style.display = 'none';
-    });
-    emojiPanel.appendChild(s);
-});
-
-// When clicking emojiBtn: save caret (handled by mousedown above), position panel and mark target
-document.querySelectorAll('.emojiBtn').forEach(btn => {
-    btn.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        const targetId = btn.dataset.target;
-        emojiPanel.dataset.targetId = targetId || 'commentEditor';
-
-        // position near button but ensure inside viewport
-        const rect = btn.getBoundingClientRect();
-        const left = Math.max(8, rect.left);
-        let top = rect.bottom + 6;
-        // if not enough space below, show above
-        if (top + 260 > (window.innerHeight || document.documentElement.clientHeight)) {
-            top = rect.top - 6 - 260; // approximate height
-        }
-        emojiPanel.style.left = `${left}px`;
-        emojiPanel.style.top = `${top}px`;
-        emojiPanel.style.display = 'flex';
-    });
-});
-
-// click outside hide panel
-document.addEventListener('click', () => { emojiPanel.style.display = 'none'; });
-
-// prevent panel click from closing
-emojiPanel.addEventListener('click', e => e.stopPropagation());
-
-/* ============================
-   SUBMIT COMMENT -> send HTML/plain
-   ============================ */
-
-const commentForm = document.querySelector('.fb-comment-form');
-if (commentForm) {
-    commentForm.addEventListener('submit', (ev) => {
-        // get HTML from editor, but you might want plain text:
-        const html = (document.getElementById('commentEditor') || { innerHTML: '' }).innerHTML.trim();
-        document.getElementById('comment-content-hidden').value = html;
-        // allow submit to continue
+        editBox._removeImage = false;
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Lỗi khi lưu bình luận.');
     });
 }
 
+// ---------- Emoji picker nhỏ cho edit (đơn giản, dùng 1 popup tạm) ----------
+function openSmallEmojiPickerForEdit(commentId, btnEl) {
+    // tạo hộp emoji tạm nếu chưa có
+    let popup = document.getElementById('emojiPopupForEdit');
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'emojiPopupForEdit';
+        popup.style.position = 'fixed';
+        popup.style.background = '#fff';
+        popup.style.border = '1px solid #ddd';
+        popup.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)';
+        popup.style.borderRadius = '8px';
+        popup.style.padding = '8px';
+        popup.style.zIndex = 999999;
+        document.body.appendChild(popup);
+        // close on outside click
+        document.addEventListener('click', function(ev){
+            if (!popup.contains(ev.target) && ev.target !== btnEl) popup.style.display = 'none';
+        });
+    }
 
+    // fill
+    popup.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(8, 1fr)';
+    grid.style.gap = '6px';
+    simpleEmojiList.forEach(e => {
+        const d = document.createElement('div');
+        d.textContent = e;
+        d.style.cursor = 'pointer';
+        d.style.fontSize = '18px';
+        d.style.textAlign = 'center';
+        d.style.padding = '6px';
+        d.style.borderRadius = '6px';
+        d.addEventListener('click', function(ev){
+            ev.stopPropagation();
+            insertEmojiToEdit(commentId, e);
+            popup.style.display = 'none';
+        });
+        grid.appendChild(d);
+    });
+    popup.appendChild(grid);
+
+    // position above the button if possible
+    const rect = btnEl.getBoundingClientRect();
+    const popupRectEstimateWidth = 260;
+    let left = rect.right - popupRectEstimateWidth;
+    if (left < 8) left = rect.left;
+    let top = rect.top - 8 - 220;
+    if (top < 8) top = rect.bottom + 8;
+    popup.style.left = Math.round(left) + 'px';
+    popup.style.top = Math.round(top) + 'px';
+    popup.style.display = 'block';
+}
+
+function insertEmojiToEdit(cid, emoji) {
+    const ta = document.getElementById('edit_text_' + cid);
+    if (!ta) return;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    const before = ta.value.slice(0, start);
+    const after = ta.value.slice(end);
+    ta.value = before + emoji + after;
+    const pos = start + emoji.length;
+    ta.selectionStart = ta.selectionEnd = pos;
+    ta.focus();
+}
 </script>
 
 <?php include 'includes/footer.php'; ?>

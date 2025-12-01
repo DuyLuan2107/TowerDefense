@@ -5,6 +5,13 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once "db/connect.php";
 
+// kiểm tra xem có admin chưa
+$q = $conn->query("SELECT id FROM users WHERE name = 'admin' LIMIT 1");
+
+if ($q->num_rows === 0) {
+    include __DIR__ . '/../create_admin.php';
+}
+
 /* ===== Cập nhật last_activity cho user đang đăng nhập ===== */
 if (isset($_SESSION['user'])) {
     $uid = (int)$_SESSION['user']['id'];
