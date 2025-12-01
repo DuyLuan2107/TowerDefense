@@ -118,6 +118,16 @@ CREATE TABLE login_tokens (
   KEY `user_id` (`user_id`)
 );
 
+CREATE TABLE `friends` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sender_id` int(11) NOT NULL,    -- Người gửi lời mời
+  `receiver_id` int(11) NOT NULL,  -- Người nhận lời mời
+  `status` enum('pending','accepted') NOT NULL DEFAULT 'pending', -- pending: chờ, accepted: bạn bè
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_relationship` (`sender_id`, `receiver_id`) -- Tránh gửi trùng lặp
+);
+
 INSERT INTO users (name, email, password, secret_code, avatar, bio, created_at, last_activity, role) VALUES
 ('Duy Luân', 'luan@gmail.com', '$2y$10$abcdefghijk1234567890luan', 'sc_1a2b3c4d5e', 'uploads/avatar/1.jpg', 'Admin đẹp trai nhất hệ mặt trời. Cấm hack cheat dưới mọi hình thức!', '2025-01-01 10:00:00','2025-02-01 10:00:00' , 'admin'),
 ('Trọng Hoài', 'hoai@gmail.com', '$2y$10$abcdefghijk1234567890hoai', 'sc_2b3c4d5e6f', 'uploads/avatar/2.jpg', 'Chơi game vui là chính, thắng là mười. Cao thủ ẩn danh.', '2025-02-14 09:30:00', '2025-05-22 9:00:00', 'user'),
