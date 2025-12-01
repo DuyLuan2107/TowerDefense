@@ -1,24 +1,29 @@
 <?php
-// create_admin.php — chạy 1 lần trên dev, xóa file sau khi dùng
-require_once __DIR__ . '/db/connect.php'; // dùng __DIR__ để chắc chắn đường dẫn đúng
+// create_admin.php — tự chạy khi chưa có admin
+require_once __DIR__ . '/db/connect.php';
 
 $name = 'admin';
 $email = 'admin@gmail.com';
-$password_plain = '123'; // đổi ngay sau khi tạo
+$password_plain = '123';
 $role = 'admin';
-$secret_code = bin2hex(random_bytes(16)); // secret random
+$secret_code = bin2hex(random_bytes(16));
 
-$hash = password_hash($password_plain, PASSWORD_DEFAULT);
+$hash = password_hash($password_plain, PASSWORD_BCRYPT);
 
-// Nếu connect.php tạo $conn thì dùng $conn->prepare
-$stmt = $conn->prepare("INSERT INTO users (name, email, password, secret_code, role) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("sssss", $name, $email, $hash, $secret_code, $role);
+// kiểm tra nếu email đã tồn tại thì dừng
+$check = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$check->bind_param("s", $email);
+$check->execute();
+$exists = $check->get_result()->num_rows > 0;
+$check->close();
 
-if ($stmt->execute()) {
-    echo "Admin created. Email=$email, password=$password_plain\n";
-} else {
-    echo "Error: " . $stmt->error . "\n";
+if ($exists) {
+    exit; // im lặng
 }
 
+$stmt = $conn->prepare("INSERT INTO users (name, email, password, secret_code, role) VALUES (?, ?, ?, ?, ?)");
+$stmt->bind_param("sssss", $name, $email, $hash, $secret_code, $role);
+$stmt->execute();
 $stmt->close();
 $conn->close();
+?>
