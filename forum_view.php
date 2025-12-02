@@ -271,7 +271,7 @@ function getParentComment($conn, $parent_id) {
                  $cid = $c['id'];  ?>
                 <div class="fb-comment" id="comment-<?= $c['id'] ?>">
                     <a href="user_profile.php?id=<?= $c['user_id'] ?>">
-                        <img class="avatar" src="<?= $c['author_avatar'] ?: 'uploads/avatar/default.png' ?>" alt="Avatar">
+                        <img class="avatar" src="<?= htmlspecialchars($c['author_avatar'] ?? 'uploads/avatar/default.png') ?>" alt="Avatar">
                     </a>
 
                     <div class="content">
