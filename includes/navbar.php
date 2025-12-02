@@ -44,7 +44,7 @@ if (isset($_SESSION['user'])) {
         <a href="contact.php"><i class="fa-solid fa-envelope"></i> Liên Hệ</a>
 
         <?php if (isset($_SESSION['user']) && ($_SESSION['user']['role'] ?? '') === 'admin'): ?>
-            <a href="admin/dashboard.php" class="admin-link"><i class="fa-solid fa-shield-halved"></i> Admin Panel</a>
+            <a href="admin/admin_panel.php" class="admin-link"><i class="fa-solid fa-shield-halved"></i> Admin Panel</a>
         <?php endif; ?>
     </div>
 
