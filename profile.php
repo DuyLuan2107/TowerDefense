@@ -137,6 +137,7 @@ $score_history_result = $conn->query("SELECT score, enemies_killed, gold_left, d
     .bio-edit-box { background:#f0f0f0; padding:12px; border-radius:8px; margin-top:10px; }
     .bio-textarea { width:100%; height:80px; padding:5px; border-radius:6px; border:1px solid #ccc; resize: none; }
     .btn-save-bio { margin-top:8px; background:#28a745; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; }
+    .btn-cancel-bio { margin-top:8px; background:#dc3545; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; }
     .bio-edit-wrapper { margin-bottom: 10px; }
     .status-wrapper { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
     .update-grid { display: flex; flex-direction: column; gap: 20px; }
@@ -193,6 +194,7 @@ $score_history_result = $conn->query("SELECT score, enemies_killed, gold_left, d
                         <form action="update_profile.php" method="POST">
                             <textarea name="new_bio" class="bio-textarea"><?= htmlspecialchars($bio) ?></textarea>
                             <button type="submit" name="change_bio" class="btn-save-bio">Lưu tiểu sử</button>
+                            <button type="button" class="btn-cancel-bio" onclick="toggleBioForm()">Hủy</button>
                         </form>
                     </div>
                 </div>

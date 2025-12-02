@@ -129,12 +129,13 @@ $res = $stmt->get_result();
                     <td>
                         <a href="../forum_view.php?id=<?= $r['post_id'] ?>#comment-<?= $r['id'] ?>"
                         style="color: var(--text); text-decoration: underline;">
-                            <?= htmlspecialchars($r['post_title']) ?> (Jump to comment #<?= $r['id'] ?>)
+                            <?= htmlspecialchars($r['post_title']) ?>
                         </a>
                     </td>
-                    <td style="max-width: 300px; word-break: break-word;">
-                        <?= nl2br(htmlspecialchars($r['content'])) ?>
+                    <td style="max-width:300px; word-break:break-word;">
+                        <?= trim($r['content']) === '' ? '<i>[Tệp đính kèm]</i>' : nl2br(htmlspecialchars($r['content'])) ?>
                     </td>
+
                     <td style="color:var(--muted)"><?= $r['created_at'] ?></td>
                     <td>
                         <form method="post" style="display:inline">

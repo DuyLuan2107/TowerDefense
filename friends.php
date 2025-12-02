@@ -198,7 +198,7 @@ $requests = $conn->query($requests_sql)->fetch_all(MYSQLI_ASSOC);
 <div class="friend-container">
     
     <div class="search-wrapper">
-        <input type="text" id="searchInput" placeholder="Nhập tên nhân vật hoặc Email..." onkeypress="if(event.key==='Enter') searchUser()">
+        <input type="text" id="searchInput" placeholder="Nhập tên ingame hoặc Email..." onkeypress="if(event.key==='Enter') searchUser()">
         <button onclick="searchUser()"><i class="fa-solid fa-search"></i> TÌM</button>
     </div>
     
