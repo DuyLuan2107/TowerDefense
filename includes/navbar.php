@@ -22,6 +22,21 @@ if (isset($_SESSION['user'])) {
         $stmt_count->close();
     }
 }
+
+$avatar = 'uploads/avatar/default.png';
+if (isset($_SESSION['user']['id'])) {
+    $uid = (int)$_SESSION['user']['id'];
+    $stmtA = $conn->prepare("SELECT avatar FROM users WHERE id = ?");
+    $stmtA->bind_param("i", $uid);
+    $stmtA->execute();
+    $resA = $stmtA->get_result();
+    if ($rowA = $resA->fetch_assoc()) {
+        $avatar = $rowA['avatar'] ?: $avatar;
+        // nếu muốn: cập nhật session cho nhất quán
+        $_SESSION['user']['avatar'] = $avatar;
+    }
+    $stmtA->close();
+}
 ?>
 
 <nav class="navbar">
@@ -51,7 +66,7 @@ if (isset($_SESSION['user'])) {
     <div class="nav-right">
         <?php if (isset($_SESSION['user'])): ?>
             <span class="user-name">
-                <img src="<?= isset($_SESSION['user']['avatar']) ? $_SESSION['user']['avatar'] : 'uploads/avatar/default.png' ?>" class="nav-mini-avatar" alt="avt">
+                <img src="<?= htmlspecialchars($avatar) ?>" class="nav-mini-avatar" alt="avt">
                 Xin chào, <strong><?php echo htmlspecialchars($_SESSION['user']['name']); ?></strong>
             </span>
             <a href="logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
