@@ -4,3 +4,38 @@ footer {
   text-align: center;
   padding: 10px;
 }
+/* Scroll-to-top giống nút chatbot, nằm trên nút bật chatbot */
+#scrollTopBtn {
+    position: fixed;
+    /* default vị trí tạm — sẽ được tính chính xác bằng JS ngay sau */
+    right: 35px;
+    bottom: calc(30px + 50px + 12px); /* calc(bottom of bot + bot height + gap) */
+    z-index: 999999;
+    width: 50px;      /* giống #chatbot-toggler */
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    display: none;    /* ẩn mặc định, hiện khi kéo xuống */
+    align-items: center;
+    justify-content: center;
+    background: #1E90FF; /* same color */
+    color: #fff;
+    cursor: pointer;
+    font-size: 22px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    transition: transform .12s ease, background .12s ease;
+}
+
+/* icon trong nút */
+#scrollTopBtn .material-symbols-rounded {
+    font-size: 22px;
+    height: 22px;
+}
+
+/* hover */
+#scrollTopBtn:hover { background: #4169E1; transform: scale(1.05); }
+
+/* Media: mobile — chatbot toggler thay vị trí => đồng bộ luôn */
+@media (max-width: 520px) {
+    #scrollTopBtn { right: 20px; bottom: calc(20px + 50px + 8px); width:50px; height:50px; }
+}

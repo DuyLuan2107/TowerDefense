@@ -41,11 +41,25 @@ include_once __DIR__ . '/../chatbotai/chatbot.php';
 <!-- External scripts used by chatbot -->
 <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.17.2/dist/sweetalert2.all.min.js"></script>
+
 <!-- Chatbot script (root-relative) -->
 <?php
 $script_url = $root . '/chatbotai/script.js';
 ?>
 <script src="<?php echo $script_url; ?>"></script>
+<button id="scrollTopBtn" title="Lên đầu trang" aria-label="Lên đầu trang" type="button">
+  <span class="material-symbols-rounded">vertical_align_top</span>
+</button>
 
 </body>
 </html>
+<script>
+window.addEventListener('scroll', function () {
+    const btn = document.getElementById('scrollTopBtn');
+    btn.style.display = window.scrollY > 200 ? 'flex' : 'none';
+});
+
+document.getElementById('scrollTopBtn').addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+</script>
