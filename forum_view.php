@@ -142,6 +142,21 @@ $stmtC2->bind_param("i", $post_id);
 $stmtC2->execute();
 $comments = $stmtC2->get_result();
 
+$commentFormAvatar = 'uploads/avatar/default.png';
+if (isset($_SESSION['user']['id'])) {
+    $uid = (int)$_SESSION['user']['id'];
+    $stmtA = $conn->prepare("SELECT avatar FROM users WHERE id = ?");
+    $stmtA->bind_param("i", $uid);
+    $stmtA->execute();
+    $resA = $stmtA->get_result();
+    if ($rowA = $resA->fetch_assoc()) {
+        $commentFormAvatar = $rowA['avatar'] ?: $commentFormAvatar;
+        // nếu muốn: cập nhật session cho nhất quán
+        $_SESSION['user']['avatar'] = $commentFormAvatar;
+    }
+    $stmtA->close();
+}
+
 // Hàm đếm số like của bình luận
 function getCommentLikes($conn, $comment_id) {
     $sql = "SELECT COUNT(*) as total FROM comment_likes WHERE comment_id = ?";
@@ -341,9 +356,18 @@ function getParentComment($conn, $parent_id) {
                         <?php
                         $cid = $c['id'];
                         $img = $conn->query("SELECT image_path FROM comment_images WHERE comment_id = $cid")->fetch_assoc();
-                        if (!empty($img['image_path'])): ?>
-                            <img src="<?= $img['image_path'] ?>" style="max-width:100%; margin-top:5px; border-radius:8px;">
+                        if (!empty($img['image_path'])):
+                            $imgPath = htmlspecialchars($img['image_path']);
+                        ?>
+                            <div class="comment-img-wrap" style="margin-top:8px;">
+                                <img class="comment-img-thumb" src="<?= $imgPath ?>" alt="Ảnh bình luận" data-full="<?= $imgPath ?>" />
+                                <button type="button" class="view-full-btn" data-full="<?= $imgPath ?>">⛶</button>
+                            </div>
                         <?php endif; ?>
+                        <div id="commentImageModal" class="comment-modal" role="dialog" aria-hidden="true">
+                            <button class="close-btn" id="commentModalClose">✖</button>
+                            <img id="commentModalImg" src="" alt="Ảnh đầy đủ">
+                        </div>
 
                         <?php if (isset($_SESSION['user'])): ?>
                             <?php 
@@ -386,7 +410,7 @@ function getParentComment($conn, $parent_id) {
 
             <?php if (isset($_SESSION['user'])): ?>
 <form class="fb-comment-form" method="post" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:flex-start;">
-    <img class="avatar" src="<?= htmlspecialchars($_SESSION['user']['avatar'] ?? 'uploads/avatar/default.png') ?>" alt="Avatar" style="width:40px; height:40px; border-radius:50%;">
+    <img class="avatar" src="<?= htmlspecialchars($commentFormAvatar) ?>" alt="Avatar" style="width:40px; height:40px; border-radius:50%;">
 
     <div style="flex:1; position:relative;">
         <div id="reply-quote" style="display:none; background:#f0f2f5; border-left:4px solid #1877f2; padding:8px 12px; margin-bottom:8px; border-radius:4px; font-size:0.9em;">
@@ -474,6 +498,64 @@ function getParentComment($conn, $parent_id) {
 .fb-comment.highlight {
     outline: 2px solid -webkit-focus-ring-color;
     outline-offset: 2px;
+}
+/* thumbnail comment image */
+.comment-img-wrap { position:relative; display:inline-block; }
+.comment-img-thumb {
+    display:block;
+    max-width:700px;
+    max-height:600px;
+    width:auto;
+    height:auto;
+    object-fit:cover;
+    border-radius:8px;
+    border:1px solid #e6e6e6;
+    cursor:zoom-in;
+}
+.comment-img-wrap.small .comment-img-thumb { cursor:default; }
+
+.view-full-btn {
+    position:absolute;
+    right:8px;
+    bottom:8px;
+    background:rgba(0,0,0,0.6);
+    color:#fff;
+    border:none;
+    padding:6px 8px;
+    border-radius:6px;
+    font-size:0.85em;
+    cursor:pointer;
+    display:inline-block;
+}
+
+/* modal full-screen */
+.comment-modal {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.85);
+    align-items:center;
+    justify-content:center;
+    z-index:200000;
+    padding:20px;
+}
+.comment-modal.open { display:flex; }
+.comment-modal img {
+    max-width:calc(100% - 40px);
+    max-height:calc(100% - 40px);
+    border-radius:8px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.6);
+}
+.comment-modal .close-btn {
+    position:absolute;
+    right:18px;
+    top:18px;
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.2);
+    color:#fff;
+    padding:6px 8px;
+    border-radius:6px;
+    cursor:pointer;
 }
 
 </style>
@@ -1004,6 +1086,87 @@ function insertEmojiToEdit(cid, emoji) {
     ta.selectionStart = ta.selectionEnd = pos;
     ta.focus();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // mở modal khi bấm nút hoặc click vào thumb
+    function openImage(fullUrl) {
+        const modal = document.getElementById('commentImageModal');
+        const img = document.getElementById('commentModalImg');
+        img.src = fullUrl;
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        // focus để hỗ trợ keyboard
+        document.getElementById('commentModalClose').focus();
+    }
+
+    function closeImage() {
+        const modal = document.getElementById('commentImageModal');
+        const img = document.getElementById('commentModalImg');
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        // release src để giải phóng bộ nhớ
+        img.src = '';
+    }
+
+    // delegate click cho nút xem ảnh và thumb
+    document.body.addEventListener('click', function(e) {
+        const btn = e.target.closest('.view-full-btn');
+        if (btn) {
+            const full = btn.getAttribute('data-full');
+            if (full) openImage(full);
+            return;
+        }
+        const thumb = e.target.closest('.comment-img-thumb');
+        if (thumb) {
+            const full = thumb.getAttribute('data-full');
+            if (full) openImage(full);
+            return;
+        }
+    });
+
+    // đóng modal
+    document.getElementById('commentModalClose').addEventListener('click', closeImage);
+    document.getElementById('commentImageModal').addEventListener('click', function(e){
+        // click nền -> đóng
+        if (e.target === this) closeImage();
+    });
+
+    // ESC để đóng
+    document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('commentImageModal');
+            if (modal.classList.contains('open')) closeImage();
+        }
+    });
+
+    // Tuỳ chọn: ẩn nút "Xem ảnh" nếu ảnh nhỏ hơn thumbnail size (kiểm tra naturalWidth)
+    document.querySelectorAll('.comment-img-thumb').forEach(function(img){
+        // nếu chưa load xong, chờ load
+        if (img.complete) {
+            maybeHideViewBtn(img);
+        } else {
+            img.addEventListener('load', function(){ maybeHideViewBtn(img); });
+        }
+    });
+
+    function maybeHideViewBtn(img){
+        // nếu ảnh thật nhỏ (width <= 360 và height <= 240) thì bỏ nút
+        const wrap = img.closest('.comment-img-wrap');
+        const btn = wrap ? wrap.querySelector('.view-full-btn') : null;
+        if (!wrap || !btn) return;
+        const maxThumbW = 360, maxThumbH = 240;
+        if (img.naturalWidth <= maxThumbW && img.naturalHeight <= maxThumbH) {
+            btn.style.display = 'none';
+            wrap.classList.add('small');
+            img.style.cursor = 'default';
+        } else {
+            btn.style.display = '';
+            wrap.classList.remove('small');
+            img.style.cursor = 'zoom-in';
+        }
+    }
+});
+
 </script>
 
 <?php include 'includes/footer.php'; ?>
