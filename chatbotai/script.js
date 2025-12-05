@@ -9,8 +9,7 @@ const closeChatbot = document.querySelector("#close-chatbot");
 
 
 // Api setup
-const API_KEY = "AIzaSyAMgcDzj2XwuVn-6wT5MnRw_ygB2TZvfns"; // LINK LẤY API KEY: https://aistudio.google.com/apikey
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+const API_URL = "chatbotai/chat.php";
 
 const userData = {
     message: null,
