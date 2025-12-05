@@ -10,6 +10,10 @@ Tower Defense là dự án kết hợp **Game Tower Defense**, **Diễn đàn(Fo
 * Bình luận, like, upload hình/video
 * Gửi phản hồi cho admin
 
+## TK quản trị viên (Admin)
+* Tài khoản : admin@gmail.com
+* Mật khẩu : 123
+
 ##  1. Gameplay chính
 * Người chơi đặt tháp để tiêu diệt kẻ địch theo từng **đợt**.
 * Enemy di chuyển theo **đường cố định** → tháp tự động bắn.
@@ -55,12 +59,8 @@ Dự án tích hợp **Chatbot AI** hỗ trợ:
 * Giải thích cách chơi game
 * Gợi ý chiến thuật đặt tháp
 * Trả lời câu hỏi về diễn đàn, tài khoản, lỗi hệ thống
-* Hỗ trợ người chơi bằng **Tiếng Việt 100%**
-* Tự động hiểu:
-  * Damage = “sát thương”
-  * Range = “tầm bắn”
-  * Fire rate = “tốc độ bắn”
 ### Công nghệ
-* **Gemini 2.0 Flash API**
 * Hỗ trợ tải ảnh → Chatbot phân tích & trả lời
+
+
 
