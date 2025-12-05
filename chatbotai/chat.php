@@ -1,8 +1,9 @@
 <?php
+require_once __DIR__ . '/config.php'; // Nạp file key
+
 header("Content-Type: application/json");
 
-// ***** API KEY ***** 
-$API_KEY = "AIzaSyDowlX_Sai1icjx3vGRbQXEncbZPVIIUJQ";
+$API_KEY = GEMINI_API_KEY; 
 
 // Nhận dữ liệu từ JS (JSON)
 $input = json_decode(file_get_contents("php://input"), true);
