@@ -53,7 +53,7 @@ Admin có thể:
   * Số bài hôm nay
   * Biểu đồ thống kê cơ bản
 
-## 4. Chatbot AI (Gemini Flash 2.0)
+## 4. Chatbot AI (Groq)
 Dự án tích hợp **Chatbot AI** hỗ trợ:
 ###  Tính năng
 * Giải thích cách chơi game
